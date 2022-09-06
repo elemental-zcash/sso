@@ -1,0 +1,32 @@
+{
+  "name": "@elemental-zcash/sso",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "./packages/*"
+  ],
+  "description": "Elemental Zcash SSO OAuth2 server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up",
+    "start:staging": "docker compose -f docker-compose.yml -f docker-compose.staging.yml up",
+    "start:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elemental-zcash/sso.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/elemental-zcash/sso/issues"
+  },
+  "overrides": {
+    "elemental-color@0.0.2-alpha.1": {
+      "elemental-color": "0.0.5"
+    }
+  },
+  "homepage": "https://github.com/elemental-zcash/sso#readme"
+}
