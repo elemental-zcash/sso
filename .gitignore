@@ -104,3 +104,9 @@ dist
 .tern-port
 
 .DS_Store
+
+#--- CUSTOM ENTRIES ---#
+
+.local.README.md
+certs/
+.env
