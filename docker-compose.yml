@@ -1,0 +1,48 @@
+version: '3'
+services:
+  redis:
+    image: redis:6
+    command: ["redis-server", "/etc/redis/redis.conf", "--requirepass ${REDIS_PSWD}"]
+    volumes:
+      - ./redis.conf:/etc/redis/redis.conf
+    environment:
+      - REDIS_PORT=6379
+    networks:
+      - sso_net
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:0.9.1-alpine
+    container_name: sso-nginx-proxy
+    #volumes:
+    #  - ./vhost.d:/etc/nginx/vhost.d:ro
+    # build: ./docker/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    #environment:
+    #  - DEFAULT_HOST=error.local
+    networks:
+      - sso_net
+    depends_on:
+      - redis
+  api:
+    build: ./packages/api
+    environment:
+      - PORT=8081
+    networks:
+      - sso_net
+      - elemental_net
+    env_file:
+      ./packages/api/.env
+    #volumes:
+    #  - ./packages/api:/usr/src/app
+    links:
+      - redis
+      # - database
+    depends_on:
+      - nginx-proxy
+      - redis
+networks:
+  sso_net:
+  elemental_net:
+    external: true
+    driver: bridge
