@@ -5,6 +5,7 @@ import React from 'react';
 import PasswordField from './PasswordField';
 
 const RegisterForm = () => {
+  // useGraphql(...)
 
   return (
     <Box borderWidth={1} borderColor="#e2e2f2" borderRadius={4} p={40} flex={1}>
@@ -32,6 +33,7 @@ const RegisterForm = () => {
                 {({ label, value }) =>
                   <TextInput
                     placeholder={label}
+                    // @ts-ignore
                     value={value}
                     onChange={handleChange('username')}
                     // onChangeText={(text) => {
