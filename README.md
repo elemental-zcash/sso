@@ -29,3 +29,14 @@ mkcert -cert-file certs/$HOST.crt -key-file certs/$HOST.key $HOST
 ```sh
 npm run start:local # alias for the docker-compose script
 ```
+
+## Resources
+
+- https://www.howtographql.com/graphql-js/6-authentication/
+- https://www.digitalocean.com/community/tutorials/how-to-build-a-graphql-api-with-golang-to-upload-files-to-digitalocean-spaces
+- https://github.com/thebergamo/realworld-graphql/blob/master/src/resources/users/resolver.js
+- https://www.toptal.com/graphql/creating-your-first-graphql-api
+- https://devdocs.magento.com/guides/v2.4/graphql/mutations/create-customer.html
+- 
+- 
+- https://app.postdrop.io/ - email HTML (for React templating?)

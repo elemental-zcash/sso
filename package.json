@@ -1,7 +1,7 @@
 {
   "name": "@elemental-zcash/sso",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.1",
   "workspaces": [
     "./packages/*"
   ],
@@ -28,5 +28,7 @@
       "elemental-color": "0.0.5"
     }
   },
-  "homepage": "https://github.com/elemental-zcash/sso#readme"
+  "homepage": "https://github.com/elemental-zcash/sso#readme",
+  "dependencies": {},
+  "devDependencies": {}
 }
