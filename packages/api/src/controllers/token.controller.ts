@@ -1,3 +1,6 @@
+/**
+ * DEPRECATED FOR NOW
+ */
 import { db } from '../data';
 import { cacheDelete, cacheGet, cacheSet, objNotNull } from '../utils';
 import userController from './user.controller';
@@ -13,22 +16,23 @@ const token = {
       if (!refreshToken) {
         return;
       }
-      let token;
-      const accessToken = await cacheGet(`tokenByRefreshToken:${refreshToken}`);
+      return null;
+      // let token;
+      // const accessToken = await cacheGet(`tokenByRefreshToken:${refreshToken}`);
 
-      if (accessToken) {
-        token = await cacheGet(`tokens:${accessToken}`);
-      }
+      // if (accessToken) {
+      //   token = await cacheGet(`tokens:${accessToken}`);
+      // }
 
-      if (!token) {
-        const res = await db.tokens.findByRefreshToken(refreshToken) || {};
-        token = transformToken(res.access_tokens, res.users.uuid);
-        if (!(await cacheSet(`tokens:${accessToken}`, token))) {
-          return;
-        }
-        await cacheSet(`tokenByRefreshToken:${accessToken}`, token.accessToken);
-      }
-      return token;
+      // if (!token) {
+      //   const res = await db.tokens.findByRefreshToken(refreshToken) || {};
+      //   token = transformToken(res.access_tokens, res.users.uuid);
+      //   if (!(await cacheSet(`tokens:${accessToken}`, token))) {
+      //     return;
+      //   }
+      //   await cacheSet(`tokenByRefreshToken:${accessToken}`, token.accessToken);
+      // }
+      // return token;
     },
     // validation: {
     //   params: Joi.object({
@@ -59,11 +63,12 @@ const token = {
   // },
   deleteByRefreshToken: {
     controller: async function deleteByRefreshToken(refreshToken: string) {
-      const accessToken = await cacheGet(`tokenByRefreshToken:${refreshToken}`);
-      if (accessToken) {
-        await cacheDelete(`tokens:${accessToken}`);
-      }
-      await db.tokens.deleteByRefreshToken(refreshToken);
+      return null;
+      // const accessToken = await cacheGet(`tokenByRefreshToken:${refreshToken}`);
+      // if (accessToken) {
+      //   await cacheDelete(`tokens:${accessToken}`);
+      // }
+      // await db.tokens.deleteByRefreshToken(refreshToken);
     },
   },
   // More powerful validation than GraphQL schema

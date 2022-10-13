@@ -1,3 +1,6 @@
+/**
+ * DEPRECATED FOR NOW
+ */
 // import { db } from "../data";
 import { nanoid } from 'nanoid';
 
@@ -27,7 +30,7 @@ const getUser = async (args: { id?: string, username?: string }) => {
   if (username) {
     id = await redisClient.get(`usernameById:${username}`);
     if (!id) {
-      id = formatUser(await db.users.findByName(username)).uuid;
+      id = formatUser(await db.users.findByUsername(username)).uuid;
       await redisClient.set(`usernameByClient:${id}`, username);
     }
   }
@@ -45,9 +48,16 @@ const getUser = async (args: { id?: string, username?: string }) => {
   return user;
 };
 
-const generateId = async (): Promise<string> => {
+export const generateId = async (): Promise<string> => {
   let id = nanoid();
-  let existingUser = formatUser(await db.users.findById(id));
+  let existingUser;
+  try {
+    existingUser = formatUser(await db.users.findById(id));
+  } catch (err) {
+    if (err.message === 'User not found') {
+      return id;
+    }
+  }
 
   if (existingUser) {
     id = await generateId();
@@ -66,7 +76,7 @@ const createUser = async (input: {
   // const id = nanoid();
   const id = await generateId();
 
-  try {
+  try { // @ts-ignore
     await db.users.add({ uuid: id, username, pswd, unverifiedEmail: unverifiedEmail, email, name, isVerifiedEmail: false });
     await cacheSet(`users:${id}`, {
       id,
