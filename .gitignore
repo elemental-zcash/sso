@@ -111,3 +111,4 @@ dist
 certs/
 .env
 lib/
+private.key

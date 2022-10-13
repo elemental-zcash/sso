@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up",
+    "start:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up --build",
     "start:staging": "docker compose -f docker-compose.yml -f docker-compose.staging.yml up",
     "start:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up"
   },
