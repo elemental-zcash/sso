@@ -4,9 +4,6 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 
 // import { getDirname } from '../../utils';
-import UserSQL from './user/user.type';
-
-export { UserSQL };
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -23,6 +20,7 @@ const users = {
   create: sql('user/create.sql'),
   add: sql('user/add.sql'),
   remove: sql('user/remove.sql'),
+  removeById: sql('user/remove-by-id.sql'),
   find: sql('user/find.sql'),
   drop: sql('user/drop.sql'),
   empty: sql('user/empty.sql'),
@@ -35,18 +33,25 @@ const oauthTokens = {
   create: sql('oauth/oauth_tokens/create.sql'),
   drop: sql('oauth/oauth_tokens/drop.sql'),
   empty: sql('oauth/oauth_tokens/empty.sql'),
+  remove: sql('oauth/oauth_tokens/remove.sql'),
+  add: sql('oauth/oauth_tokens/add.sql'),
+  find: sql('oauth/oauth_tokens/find.sql'),
 };
 
 const oauthAuthorizationCodes = {
   create: sql('oauth/oauth_authorization_codes/create.sql'),
   drop: sql('oauth/oauth_authorization_codes/drop.sql'),
   empty: sql('oauth/oauth_authorization_codes/empty.sql'),
+  add: sql('oauth/oauth_authorization_codes/add.sql'),
+  find: sql('oauth/oauth_authorization_codes/find.sql'),
+  findByUserId: sql('oauth/oauth_authorization_codes/find-by-user-id.sql'),
 };
 
 const oauthClients = {
   create: sql('oauth/oauth_clients/create.sql'),
   drop: sql('oauth/oauth_clients/drop.sql'),
   empty: sql('oauth/oauth_clients/empty.sql'),
+  init: sql('oauth/oauth_clients/init.sql'),
 };
 
 const oauthScopes = {

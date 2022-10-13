@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "0.0.1",
+  "migrationsToRun": [{
+    "file": "./migration.sql"
+  }]
+}
