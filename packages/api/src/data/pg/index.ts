@@ -1,6 +1,7 @@
 import pgPromise, { IDatabase } from 'pg-promise';
 
-import { IExtensions, UsersRepository, TokensRepository } from './repos';
+import { IExtensions, UsersRepository, TokensRepository, AuthorizationCodesRepository, ClientsRepository,  } from './repos';
+import { users as usersSql, oauthTokens as tokensSql, oauthAuthorizationCodes as authCodesSql, oauthClients as clientsSql } from './sql';
 
 type ExtendedProtocol = IDatabase<IExtensions> & IExtensions;
 
@@ -11,8 +12,10 @@ const initOptions = {
 
     // Do not use 'require()' here, because this event occurs for every task and transaction being executed,
     // which should be as fast as possible.
-    obj.users = new UsersRepository(obj, pg);
-    obj.tokens = new TokensRepository(obj, pg);
+    obj.users = new UsersRepository(obj, pg, null, usersSql);
+    obj.tokens = new TokensRepository(obj, pg, null, tokensSql);
+    obj.authorizationCodes = new AuthorizationCodesRepository(obj, pg, null, authCodesSql);
+    obj.clients = new ClientsRepository(obj, pg, null, clientsSql);
     // obj.products = new ProductsRepository(obj, pgp);
   }
 };
