@@ -2,23 +2,33 @@ import http from 'http';
 // import RedisServer from 'redis-server';
 import { promisify } from 'util';
 import dotenv from 'dotenv';
+import { Client } from 'redis-om';
+// import { Client as RedisOmClient } from './data/custom-redis-om-client';
 
 dotenv.config();
 
 
 import app from './app';
 import { publisher, redisClient, subscriber } from './data';
+import { initializeRedisOm } from './data/redis';
 
 const port = process.env.PORT || 8080;
 
 const server = http.createServer(app);
 
+// export let redisOmClient: Client;
 
-const onListening = () => {
+
+const onListening = async () => {
   const address = server.address();
   const bind = (typeof address === 'string') ? `pipe ${address}` : `port ${address.port}`;
 
   console.log(`Listening on: ${bind}`);
+
+  await initializeRedisOm();
+
+  // @ts-ignore
+  // redisOmClient = await new RedisOmClient().use(_redisOmClient);
 };
 
 
