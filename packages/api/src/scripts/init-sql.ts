@@ -2,14 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 import { db } from '../data/pg';
 
-import { reset, users, oauthClients, oauthScopes, oauthTokens, oauthAuthorizationCodes } from '../data/sql';
-
-
-// db.none(reset);
-// db.none(users.create);
-
-
-
+import { reset, users, oauthClients, oauthScopes, oauthTokens, oauthAuthorizationCodes } from '../data/pg/sql';
 
 const init = async () => {
   try {
@@ -21,6 +14,12 @@ const init = async () => {
       await t.none(oauthClients.create);
       await t.none(oauthAuthorizationCodes.create);
     });
+
+    await db.tx(async (t) => {
+      if (process.env.CLIENT_SECRET) {
+        await t.any(oauthClients.init, [process.env.CLIENT_SECRET]);
+      }
+    })
 
 
     // success;

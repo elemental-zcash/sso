@@ -5,15 +5,17 @@ import { makeRedisSave } from '../utils/redis';
 
 
 class User extends models.Model {
-  id = models.AutoField({ primary_key: true });
-  uuid = models.TextField();
+  id = models.AutoField({ primary_key: true, redisType: 'string' });
+  publicId = models.TextField();
   name = models.TextField();
   username = models.TextField();
   email = models.TextField();
+  totpSecret = models.TextField();
   unverifiedEmail = models.TextField();
   isVerifiedEmail = models.BooleanField();
   pswd = models.TextField();
   joinedOn = models.DateTimeField();
+  roles = models.TextArrayField();
 
   Meta = {
     db_table: 'users',

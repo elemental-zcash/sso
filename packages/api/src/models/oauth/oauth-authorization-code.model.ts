@@ -1,5 +1,7 @@
 import { models } from 'elemental-orm';
+
 import User from '../user.model';
+import OAuthClient from './oauth-client.model';
 
 
 class OAuthAuthorizationCode extends models.Model {
@@ -7,8 +9,10 @@ class OAuthAuthorizationCode extends models.Model {
   authorizationCode = models.TextField();
   expiresAt = models.DateTimeField();
   redirectUri = models.TextField();
-  clientId = models.TextField();
-  userId = models.ForeignKey(User);
+  clientId = models.ForeignKey(OAuthClient, { redisType: 'string' });
+  scopes = models.TextArrayField();
+  // TODO: scope = ... ?
+  userId = models.ForeignKey(User, { redisType: 'string' });
 
   Meta = {
     db_table: 'oauth_authorization_codes',
