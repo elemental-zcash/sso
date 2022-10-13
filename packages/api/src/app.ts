@@ -19,9 +19,14 @@ import resolvers from './graphql/resolvers';
 // import repositories from './repositories';
 import routes from './routes';
 
-import * as Controllers from './controllers';
+import * as Repositories from './data/repositories';
 
 import { oAuthModel } from './oauth';
+import { db } from './data';
+import { extractBearerToken } from './utils';
+import { AuthenticationError } from './errors';
+import { UserType } from './models';
+import { Viewer } from './types';
 
 // import { db } from './data/pg';
 
@@ -42,14 +47,15 @@ app.oauth = new ExpressOAuthServer({
   model: oAuthModel,
   // require GraphQL client for now:
   //
-  // requireClientAuthentication: {
-  //   password: false,
-  // },
+  requireClientAuthentication: {
+    refresh_token: false,
+    authorization_code: false,
+  },
 });
 
 
 if (process.env.NODE_ENV === 'development') {
-  log.setLevel(log.levels.INFO);
+  log.setLevel(log.levels.DEBUG);
 }
 else if (process.env.NODE_ENV === 'production') {
   log.setLevel(log.levels.WARN);
@@ -60,36 +66,76 @@ app
   .use(express.urlencoded({ extended: false }))
   .use(helmet());
 
-const controllers = {
-  users: {
-    get: Controllers.users.get,
-    create: Controllers.users.create,
-    update: Controllers.users.update,
-    delete: Controllers.users.delete,
-  },
-};
+const repositories = Repositories;
+
+class _Viewer {
+  id: string;
+  data: Viewer;
+  constructor(data) {
+    if (data) {
+      this.id = data.publicId;
+      this.data = data;
+    }
+  }
+  get publicId() {
+    return this.id;
+  }
+  toJSON(): Viewer {
+    if (!this.data || !this.id) {
+      return null;
+    }
+    return {
+      ...this.data,
+      userId: this.id,
+    };
+  }
+  static makePublicUser() {
+    return new this({
+      isPublic: true,
+      id: null, publicId: null, name: null, username: null,
+      email: null, totpSecret: null, pswd: null,
+      unverifiedEmail: null, isVerifiedEmail: null, joinedOn: null, roles: null
+    })
+  }
+  static makeSystemUser() {
+    return new this({
+      // isSystem: true,
+      id: null, publicId: null, name: null, username: null,
+      email: null, totpSecret: null, pswd: null,
+      unverifiedEmail: null, isVerifiedEmail: null, joinedOn: null, roles: null
+    });
+  }
+}
 
 const getContextFromRequest = async (req) => {
   // return {};
   try {
-    let viewer;
-    let token;
-    const reqToken =
-      req.headers &&
-      req.headers.authorization &&
-      (req.headers.authorization as string).replace(/^\s*Bearer\s*/, '');
-    // if (reqToken) {
-    //   console.log({ reqToken });
-    //   token = await db.tokens.findByToken(reqToken);
-    //   console.log({ now: Date.now(), expiresAt: new Date(token.accessTokenExpiresOn) });
-    //   if (isBefore(Date.now(), new Date(token.accessTokenExpiresOn))) {
-    //     viewer = await db.users.findById(token.userId);
-    //     console.log(123, ' ', viewer.uuid);
-    //   }
-    // }
-    return { request: req, viewer, token, ...controllers };
+    const reqToken = extractBearerToken(req.headers);
+    if (!reqToken) {
+      // throw new AuthenticationError('You must be logged in.');
+      // TODO: Create guest viewer with rate limiting based on IP, etc, with HTML SSR for cache strategy
+      return { request: req, ...repositories, viewer: _Viewer.makePublicUser().toJSON(), isPublic: true };
+    }
+    const token = await repositories.tokens.findByAccessToken(reqToken);
+    if (!(isBefore(Date.now(), new Date(token.accessTokenExpiresOn)))) {
+      throw new AuthenticationError('Session has expired');
+    }
+
+    let viewer = new _Viewer((await repositories.users.findById({ isAuthenticating: true } as unknown as UserType, token.userId)));
+    log.debug({ viewer });
+    if (!viewer?.publicId) {
+      if (reqToken === 'CE1ruYZx8Gc2EDYVgijyJtgvm11SlXsNph0JphtsB9ieskk9FOw4S4xh3rETMAFGkbISXmz4hRcxauK6v7Xi60KsH17knnKemQjsLjVroYd4f8M') {
+        viewer = _Viewer.makeSystemUser();
+      } else {
+        throw new AuthenticationError('Failed to authenticate');
+        // return {};
+      }
+    }
+    console.log('viewer public id: ', viewer?.publicId);
+
+    return { request: req, viewer: viewer.toJSON(), token, ...repositories };
   } catch (error) {
-    console.log(error);
+    log.error(error);
     return undefined;
   }
 };
@@ -119,7 +165,7 @@ app.use('/graphql', graphqlHTTP(async (request) => {
   return {
     schema,
     context: await getContextFromRequest(request),
-    graphiql: true || process.env.NODE_ENV === 'development',
+    graphiql: process.env.NODE_ENV === 'development',
     introspection: process.env.NODE_ENV === 'development'
   };
 }));

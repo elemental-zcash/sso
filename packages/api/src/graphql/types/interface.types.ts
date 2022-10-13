@@ -10,4 +10,9 @@ export default `
     message: String!
     code: String
   }
+
+  interface Actor {
+    id: String!
+    username: String!
+  }
 `;

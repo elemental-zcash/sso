@@ -13,15 +13,17 @@ type ExcludeProps = '__meta' | 'getTableName' | 'objects' | 'save'
 // `get${Capitalize<string & Property>}`
 // Exclude<Property, ExcludeProps>
 
-type ModelTypeMapping<Type> = Type extends { __type: 'string' }
+type ModelTypeMapping<Type> = Type extends { metadata: { __jsType: 'string' } }
   ? string
-  : Type extends { __type: 'number' }
+  : Type extends { metadata: { __jsType: 'number' } }
     ? number
-    : Type extends { __type: 'boolean' }
+    : Type extends { metadata: { __jsType: 'boolean' } }
       ? boolean
-      : Type extends { __type: 'Date' }
+      : Type extends { metadata: { __jsType: 'date' } }
         ? Date
-        : unknown;
+        : Type extends { metadata: { __jsType: 'string[]' } }
+          ? string[]
+          : unknown;
 
 export type ModelToSnakeCase<Type> = {
   [Property in keyof Type as `${CamelToSnakeCase<string & Exclude<Property, ExcludeProps>>}`]: ModelTypeMapping<Type[Property]>;

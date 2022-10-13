@@ -4,8 +4,14 @@ export default `
   type User {
     id: ID!
     username: String!
+    name: String
     joinedOn: Date
-    email: String!
+    email: String
+  }
+
+  type Tokens {
+    accessToken: String
+    refreshToken: String
   }
 
   """
@@ -36,7 +42,7 @@ export default `
 
   type SignupSuccess {
     user: User!
-    token: String!
+    code: String!
   }
 
   type SignupError implements Error {
@@ -47,13 +53,13 @@ export default `
   union SignupResponse = SignupSuccess | SignupError
 
   input LoginInput {
-    email: String
-    token: String!
+    email: String!
+    password: String!
   }
 
   type LoginSuccess {
     user: User!
-    token: String!
+    code: String!
   }
   type LoginError implements Error {
     message: String!
@@ -100,10 +106,22 @@ export default `
 
   union VerifyUserResponse = VerifyUserSuccess | VerifyUserError
 
+  type ViewerNotFoundError implements Error {
+    message: String!
+    code: String
+  }
+
+  union ViewerResult = User | ViewerNotFoundError
+
   type Query {
     users: [User]
     user(id: ID!): UserResult
     userByUsername(name: String!): UserResult
+    viewer: ViewerResult
+  }
+
+  type MockResponse {
+    mock: String
   }
 
   type Mutation {
@@ -115,5 +133,9 @@ export default `
     verifyUser(token: String!): VerifyUserResponse
     updateUser(input: UpdateUserInput!): UpdateUserResponse
     deleteUser(id: ID!): DeleteResponse
+    verifyEmail(token: String!): MockResponse
+    sendVerificationEmail(email: String!): MockResponse
+    sendPasswordResetEmail(email: String!): MockResponse
+
   }
 `;
