@@ -1,5 +1,9 @@
+import { SchemaDefinition } from 'redis-om';
+import { models } from 'elemental-orm';
+
 import { client } from '../data/redis';
 import { objNotNull } from './misc';
+import { ModelToType } from './types';
 
 type UnknownObj = { [key: string]: unknown };
 
@@ -90,3 +94,53 @@ export const makeRedisSave = redisClient => async (args, relations?) => {
     }
   }
 };
+
+export async function cacheSaveEntity<T extends models.Model, ModelType = ModelToType<T>>(
+  data: ModelType, model: T, repo
+) {
+  if (!data || !model || !repo) {
+    return null;
+  }
+
+  const _entity: ModelToType<T> = Object.keys(model.getFields()).reduce((acc, property) => {
+    acc[property] = data[property];
+    return acc;
+  }, {}) as ModelToType<T>;
+
+  const cachedUser = repo.createEntity(_entity);
+  await repo.save(cachedUser);
+  return data;
+}
+
+export async function cacheSearchEntity<T extends models.Model, ModelType = ModelToType<T>>(
+  searchArg, model: T, repo,
+): Promise<ModelType> {
+  const [searchKey, searchValue] = Object.entries(searchArg)[0];
+  const resultEntity = await repo.search().where(searchKey).equals(searchValue).return.first();
+
+  if (!resultEntity) {
+    return null;
+  }
+
+  const result: ModelType = Object.keys(model.getFields()).reduce((acc, property) => {
+    acc[property] = resultEntity[property];
+    return acc;
+  }, {}) as ModelType;
+  // const { id, ...entity } = _entity;
+
+  return result;
+}
+
+export const getRedisSchemaFromModel = (Model: typeof models.Model): SchemaDefinition => {
+  const model = new Model({} as any, {} as any);
+
+  return Object.keys(model).reduce((acc, property) => {
+    const val = model[property];
+
+    if (val?.metadata?.__jsType) {
+      // log.debug({ redisType: val.metadata.__redisType });
+      acc[property] = { type: val.metadata.__redisType || val.metadata.__jsType };
+    }
+    return acc;
+  }, { dbIndex: { type: 'number' }});
+}
