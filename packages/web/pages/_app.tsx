@@ -4,10 +4,11 @@ import { ThemeProvider, LayoutProvider } from 'elemental-react';
 import { theme } from '@elemental-zcash/components';
 import { RPNativeProvider } from '@react-platform/native';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { ApolloProvider } from '@apollo/client';
 
 
 import useWindowViewport from '../components/hooks/use-window-viewport';
-
+import apolloClient from '../apollo-client';
 
 import '../styles/layout.css';
 
@@ -20,7 +21,7 @@ try {
 if (typeof window !== 'undefined' && WebFont) {
   WebFont.load({
     google: {
-      families: ['IBM Plex Sans', 'IBM Plex Serif', 'IBM Plex Mono:300,400,500,700']
+      families: ['IBM Plex Sans', 'IBM Plex Serif', 'IBM Plex Mono:300,400,500,700', 'Roboto', 'Roboto Mono']//'Roboto:300:400:500:700', 'Roboto Mono:300:400:500:700']
     },
   });
 }
@@ -44,6 +45,16 @@ const lineHeights = [h1, h2, h3, h4, h5, h6].map(n =>
 );
 // @ts-ignore
 fontSizes.h1 = h1;
+
+const typefaces = {
+  ibmPlexSans: {
+    light: 'IBM Plex Sans',
+    regular: 'IBM Plex Sans',
+    medium: 'IBM Plex Sans',
+    semiBold: 'IBM Plex Sans',
+    mono: 'IBM Plex Mono'
+  },
+};
 
 
 const getBreakpoint = (w) => {
@@ -74,20 +85,31 @@ const processStyleFunc = (style) => ({ ...style });
 
 const App = ({ Component, pageProps }: AppProps) => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <RPNativeProvider processStyle={processStyleFunc}>
-        <ThemeProvider
-          design={{ Button: {} }}
-          // @ts-ignore
-          colorMode="day"
-          theme={theme}
-        >
-          <Wrapper>
-            <Component {...pageProps} />
-          </Wrapper>
-        </ThemeProvider>
-      </RPNativeProvider>
-    </QueryClientProvider>
+    <ApolloProvider client={apolloClient}>
+      <QueryClientProvider client={queryClient}>
+        <RPNativeProvider processStyle={processStyleFunc}>
+          <ThemeProvider
+            design={{ Button: {} }}
+            // @ts-ignore
+            colorMode="day"
+            theme={{
+              ...theme,
+              // fonts: {
+              //   ...theme.fonts,
+              //   primary: typefaces.ibmPlexSans.mono,
+              //   primaries: typefaces.ibmPlexSans,
+              //   secondary: typefaces.ibmPlexSans.regular,
+              //   secondaries: typefaces.ibmPlexSans,
+              // }
+            }}
+            >
+            <Wrapper>
+              <Component {...pageProps} />
+            </Wrapper>
+          </ThemeProvider>
+        </RPNativeProvider>
+      </QueryClientProvider>
+    </ApolloProvider>
   );
 };
 
