@@ -1,7 +1,7 @@
 import log from 'loglevel';
 import argon2 from 'argon2';
 import * as TokenUtil from 'oauth2-server/lib/utils/token-util';
-import { addMinutes } from 'date-fns';
+import { addHours, addMinutes, isBefore } from 'date-fns';
 // import ExpressO
 
 import { APIError, ErrorCodes } from '../utils';
@@ -12,6 +12,9 @@ import { User, UserType } from '../../models';
 import { generateId } from '../../controllers/user.controller';
 import * as AuthService from '../../services/auth.service';
 import * as MailService from '../../services/email.service';
+import { checkEmailVerificationLimit, checkUserRateLimit } from '../../services/rate-limit.service';
+import { getIpFromReq } from '../../utils/misc';
+import { db } from '../../data';
 
 
 const aliasId = (user) => {
@@ -38,6 +41,23 @@ export default {
         ...user.users,
         id: user.users.uuid,
       }));
+    },
+    viewer: async (_, {}, context: GraphQLContext) => {
+      const { userId } = context.viewer || {};
+      if (!context.viewer || !userId) {
+        return {
+          __typename: 'ViewerNotFoundError',
+          message: 'Viewer not found',
+          code: 'NOT_FOUND',
+        };
+      }
+      // const viewer = { userId };
+
+      return {
+        __typename: 'Viewer',
+        user: context.viewer,
+        userId,
+      };
     },
     user: async (_, { id }, context: GraphQLContext) => {
       let user;
@@ -83,6 +103,18 @@ export default {
       const pswdHsh = await argon2.hash(pswd);
 
       try {
+        let existingUser = await context.users.findByEmail({ isAuthenticating: true } as unknown as UserType, email);
+        if (!existingUser) {
+          existingUser = await context.users.findByUnverifiedEmail({ isAuthenticating: true } as unknown as UserType, email);
+        }
+        if (existingUser) {
+          log.debug('existingUser: SignupError');
+          return {
+            __typename: 'SignupError',
+            message: 'Failed to create user. If you have already have an account, please try a password reset.',
+            code: 'MISC',
+          }
+        }
         const publicId = await generateId(); // @ts-ignore
         const user = await context.users.create(context.viewer, { publicId, unverifiedEmail: email, username, name, pswd: pswdHsh, isVerifiedEmail: false });
 
@@ -98,7 +130,7 @@ export default {
         if (!user || !authorizationCode?.authorizationCode) {
           return {
             __typename: 'SignupError',
-            message: 'Failed to create user',
+            message: 'Failed to create user. If you have already have an account, please try a password reset.',
             code: 'MISC',
           }
         }
@@ -115,10 +147,32 @@ export default {
     login: async (_, { input }, context: GraphQLContext) => {
       const { email, password } = input;
 
-      const user = await context.users.findByEmail({ isAuthenticating: true } as unknown as UserType, email);
+      let user = await context.users.findByEmail({ isAuthenticating: true } as unknown as UserType, email);
+      let isVerifiedEmail;
+      if (!user) {
+        user = await context.users.findByUnverifiedEmail({ isAuthenticating: true } as unknown as UserType, email);
+        isVerifiedEmail = false;
+      }
 
-      const authCodes = await AuthService.authenticate({ hash: user?.pswd, password, username: user?.username });
-      if (!authCodes || !user.publicId) {
+      // const email = user.email || user.unverifiedEmail;
+
+      let authCodes;
+      try {
+        log.debug('login: ', { user, email: (isVerifiedEmail === false) ? user.unverifiedEmail : user.email });
+        authCodes = user.publicId && await AuthService.authenticate({
+          hash: user?.pswd, password, username: user?.username, email: (isVerifiedEmail === false) ? user.unverifiedEmail : user.email/* || user.unverifiedEmail */, ip: getIpFromReq(context.request),
+        });
+      } catch (err) {
+        if (err?.data?.retryAfter) {
+          return {
+            __typename: 'LoginError',
+            message: 'Login failed: Too many attempts, try again later',
+            code: ErrorCodes.MISC_ERROR,
+          };
+        }
+      }
+
+      if (!authCodes) {
         return {
           __typename: 'LoginError',
           message: 'Login failed: email or password is incorrect',
@@ -136,33 +190,90 @@ export default {
         code: authorizationCode.authorizationCode,
       };
     },
-    sendVerificationEmail: async (_, { address }, context) => {
-      const emailAddress = '';
-      // TODO: Get email from user DAL + rate limit (with curve?)
-      // await MailService.sendVerificationEmail(emailAddress);
+    verifyEmail: async (_, { token }, context: GraphQLContext) => {
+      const user = await db.users.findByEmailToken(token);
+      // const user = await context.users.redisRepo.search().where('emailConfirmationToken').equals(token).return.first();
+      log.debug({ user }); // @ts-ignore
+      if (!user) {
+        // return { message: 'error', code: 'ERROR' };
+        return false;
+      }
+      const { token: userEmailToken, expiresAt } = (user.emailConfirmation as any) || {};
+      log.debug({ now: new Date(), expiresAt: new Date(expiresAt), isBefore: isBefore(new Date(), new Date(expiresAt)) })
+      if (token === userEmailToken && isBefore(new Date(), new Date(expiresAt))) {
+        // FIXME: Allow to verify email token without being logged in?
+        await context.users.update(context.viewer, user.publicId, { isVerifiedEmail: true, unverifiedEmail: null, email: user.unverifiedEmail });
+        return true;
+      }
+      // log.debug('verifyEmail: ', { user, isEqual: token === user?.emailConfirmation?.token });
 
-      return {};
+      return false;
+      // const user = await context.users.findByUnverifiedEmail({ isAuthenticating: true } as unknown as UserType, address);
+
+    },
+    sendVerificationEmail: async (_, { address }, context: GraphQLContext) => {
+      try {
+        const user = await context.users.findByUnverifiedEmail(context.viewer as unknown as UserType, address);
+
+        log.debug('sendVerificationEmail: ', { user, viewer: context.viewer });
+        if (!user?.unverifiedEmail) {
+          // log.trace('sendVerificationEmail: ', { user })
+          return false;
+        }
+        // TODO: Email verification code with rate limit for UX - invalidate code after 5 incorrect tries? Or rate limit 4 tries an hour and expiry time of 
+       // Number code (for i18n) - 1234 5678 ? 8 characters?
+        const emailToken = await TokenUtil.generateRandomToken();
+        const emailTokenExpiresAt = addHours((new Date()), 8);
+        const updateRes = await context.users.update(context.viewer, user.publicId, {
+          emailConfirmation: { token: emailToken, expiresAt: emailTokenExpiresAt },
+        } as any);
+        log.debug('sendVerificationEmail: ', { updateRes, emailToken });
+
+        const { allow, retryAfter } = await checkEmailVerificationLimit(user.unverifiedEmail);
+        if (allow && updateRes) {
+          if (user.unverifiedEmail.includes('@macintoshhelper.com')) {
+            await MailService.sendVerificationEmail(user.unverifiedEmail, emailToken);
+          }
+          log.debug('Sent verification email');
+
+          return true;
+        }
+        // TODO: Throw error with some retry after info
+        return false;
+        // const emailAddress = '';
+        // TODO: Get email from user DAL + rate limit (with curve?)
+        // await MailService.sendVerificationEmail(emailAddress);
+
+      } catch (err) {
+        log.error({ err });
+      }
+      return false;
     },
     // createUser: async (_, { id, input }, context) => {
     // },
-    updateUser: async (_, { id, user }, context) => {
+    updateUser: async (_, { input: { id, user } }, context: GraphQLContext) => {
       try {
-        const updatedUserRes = await context.users.put(id, user);
+        const { name, username, zcashaddress, bio, website, twitter, youtube, instagram } = user;
+
+        const updatedUserRes = await context.users.update(context.viewer, id, ({
+          name, username, zcashaddress, bio, socials: { website, twitter, youtube, instagram
+        }} as any));
+        
+        // const updatedUserRes = await context.users.put(id, user);
 
         if (!updatedUserRes) {
           throw new APIError('User not found', ErrorCodes.USER_NOT_FOUND);
         }
 
-        const updatedUser = await context.users.byId(id);
+        const updatedUser = await context.users.findById(context.viewer, id);
 
         return {
-          success: true,
-          message: 'Success',
+          __typename: 'UpdateUserSuccess',
           user: updatedUser,
         };
       } catch (error) {
         log.warn(error);
-        throw new APIError(error.message, ErrorCodes.MISC_ERROR);
+        throw new APIError('Update user failed', ErrorCodes.MISC_ERROR);
       }
     },
     deleteUser: async (_, { id }, context) => {
