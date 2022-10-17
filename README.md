@@ -53,6 +53,8 @@ npm run start:local # alias for the docker-compose script
 - 
 - https://app.postdrop.io/ - email HTML (for React templating?)
 - 
+- VERIFYING EMAILS: https://designmodo.com/verification-emails/
+- 
 
 **OAuth2**
 
