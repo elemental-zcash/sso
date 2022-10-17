@@ -5,11 +5,11 @@
 
 import { sendEmail } from '../elemental-mail';
 
-export const sendVerificationEmail = async (address: string) => {
+export const sendVerificationEmail = async (address: string, token: string) => {
   await sendEmail({
     to: address,
-    text: 'This is a test verification email',
-    subject: 'Test verification email',
+    text: `Verify your account with the token: https://sso-staging.elementalzcash.com/auth/verify-email?token=${token}`,
+    subject: 'Test email verification email',
     from: process.env.NO_REPLY_FROM_ADDRESS,
   });
 

@@ -1,9 +1,14 @@
+import { GraphQLContext } from '../../app';
 import init from '../../scripts/init-sql';
 
 const resolver = {
   Mutation: {
-    resetDatabase: async () => {
+    resetDatabase: async (_, { input }, context: GraphQLContext) => {
       try {
+        if (!context?.viewer?.isSystem) {
+          return { success: false, message: 'Auth failed' };
+        }
+
         await init();
         // TODO: Only allow in dev environment with auth
 

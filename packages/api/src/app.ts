@@ -10,6 +10,7 @@ import fetch from 'node-fetch';
 import ExpressOAuthServer from 'express-oauth-server';
 // import OAuth2Server from 'express-oauth-server';
 import { isBefore, parse } from 'date-fns';
+import cors from 'cors';
 
 import { makeExecutableSchema } from '@graphql-tools/schema';
 
@@ -61,10 +62,26 @@ else if (process.env.NODE_ENV === 'production') {
   log.setLevel(log.levels.WARN);
 }
 
+const corsOptions = process.env.NODE_ENV === 'development' ? {
+  origin: ['https://elemental-sso.local', 'http://localhost:3000'],
+  optionsSuccessStatus: 200,
+} : {
+  origin: ['https://sso-staging.elementalzcash.com'],
+  optionsSuccessStatus: 200,
+}
+
 app
   .use(express.json())
   .use(express.urlencoded({ extended: false }))
-  .use(helmet());
+  .use(cors(corsOptions))
+  .use(helmet({
+    // contentSecurityPolicy: {
+    //   directives: {
+    //     ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+    //     'connect-src': ['\'self\'', 'https://elemental-sso.local'],
+    //   },
+    // }
+  }));
 
 const repositories = Repositories;
 
@@ -75,19 +92,25 @@ class _Viewer {
     if (data) {
       this.id = data.publicId;
       this.data = data;
+      // if (!data.isVerifiedEmail) {
+      //   this.data.isPublic = true;
+      // }
     }
   }
   get publicId() {
     return this.id;
   }
   toJSON(): Viewer {
-    if (!this.data || !this.id) {
+    if (!this.data/* || !this.id*/) {
       return null;
     }
     return {
       ...this.data,
       userId: this.id,
     };
+  }
+  get isVerified() {
+    return this.data.isVerifiedEmail;
   }
   static makePublicUser() {
     return new this({
@@ -99,7 +122,7 @@ class _Viewer {
   }
   static makeSystemUser() {
     return new this({
-      // isSystem: true,
+      isSystem: true,
       id: null, publicId: null, name: null, username: null,
       email: null, totpSecret: null, pswd: null,
       unverifiedEmail: null, isVerifiedEmail: null, joinedOn: null, roles: null
@@ -114,8 +137,14 @@ const getContextFromRequest = async (req) => {
     if (!reqToken) {
       // throw new AuthenticationError('You must be logged in.');
       // TODO: Create guest viewer with rate limiting based on IP, etc, with HTML SSR for cache strategy
-      return { request: req, ...repositories, viewer: _Viewer.makePublicUser().toJSON(), isPublic: true };
+      const guestViewer = _Viewer.makePublicUser().toJSON();
+      // log.debug({ guestViewer });
+      return { request: req, ...repositories, viewer: guestViewer, isPublic: true };
     }
+    if (reqToken === process.env.SYSTEM_TOKEN) {
+      const viewer = _Viewer.makeSystemUser();
+      return { request: req, viewer: viewer.toJSON(), ...repositories };
+    } 
     const token = await repositories.tokens.findByAccessToken(reqToken);
     if (!(isBefore(Date.now(), new Date(token.accessTokenExpiresOn)))) {
       throw new AuthenticationError('Session has expired');
@@ -124,14 +153,9 @@ const getContextFromRequest = async (req) => {
     let viewer = new _Viewer((await repositories.users.findById({ isAuthenticating: true } as unknown as UserType, token.userId)));
     log.debug({ viewer });
     if (!viewer?.publicId) {
-      if (reqToken === 'CE1ruYZx8Gc2EDYVgijyJtgvm11SlXsNph0JphtsB9ieskk9FOw4S4xh3rETMAFGkbISXmz4hRcxauK6v7Xi60KsH17knnKemQjsLjVroYd4f8M') {
-        viewer = _Viewer.makeSystemUser();
-      } else {
-        throw new AuthenticationError('Failed to authenticate');
-        // return {};
-      }
+      throw new AuthenticationError('Failed to authenticate');
     }
-    console.log('viewer public id: ', viewer?.publicId);
+    log.debug('viewer public id: ', viewer?.publicId);
 
     return { request: req, viewer: viewer.toJSON(), token, ...repositories };
   } catch (error) {

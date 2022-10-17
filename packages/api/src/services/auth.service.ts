@@ -1,16 +1,38 @@
 import argon2 from 'argon2';
 import { addMinutes } from 'date-fns';
 import * as TokenUtil from 'oauth2-server/lib/utils/token-util';
+import { checkUserRateLimit } from './rate-limit.service';
 
 const saveAuthorizationCode = () => {
   // TODO: 
 };
 
+class RateLimitError extends Error {
+  data: {
+    retryAfter: number;
+  };
+  constructor(message: string, data: { retryAfter: number }) {
+    super(message);
+    this.data = this.data;
+  }
+}
 
-export async function authenticate({ username, password, hash }: { username?: string, password?: string, hash?: string }): Promise<{ code: string, expiresAt: Date } | null> {
-  if (!username || !password || !hash || !await argon2.verify(hash, password)) {
+export async function authenticate({ username, password, hash, email, ip }: {
+  username?: string, password?: string, hash?: string, email: string, ip: string
+}): Promise<{ code: string, expiresAt: Date } | null> {
+  if (/*!username || */!hash || !password || !email || !ip) {
     return null;
   }
+  const { onSuccess, onFailure, retryAfter } = await checkUserRateLimit(email, ip);
+
+  if (!await argon2.verify(hash, password) || retryAfter) {
+    if (retryAfter) {
+      throw new RateLimitError('Rate limit reached.', { retryAfter });
+    }
+    await onFailure();
+    return null;
+  }
+  await onSuccess();
 
   const authCode = await TokenUtil.generateRandomToken();
   const authCodeExpiresAt = addMinutes((new Date()), 5);
