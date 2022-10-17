@@ -1,0 +1,16 @@
+version: '3'
+services:
+  web:
+    build: ./
+    environment:
+      - PORT=3000
+    networks:
+      - sso_net
+      - elemental_net
+    # depends_on:
+    #   - nginx-proxy
+networks:
+  sso_net:
+  elemental_net:
+    external: true
+    driver: bridge

@@ -8,9 +8,9 @@ services:
       - ./docker/vhost.d:/etc/nginx/vhost.d:ro
   api:
     environment:
-      - VIRTUAL_HOST=api.elemental-sso.local
+      - VIRTUAL_HOST=sso-api.elementalzcash.com
       - VIRTUAL_PORT=8081
-      - NODE_ENV=development
+      - NODE_ENV=production
   # web:
   #   environment:
   #     - VIRTUAL_HOST=elemental-sso.local

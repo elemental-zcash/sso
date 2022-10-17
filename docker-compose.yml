@@ -8,7 +8,7 @@ services:
       - REDIS_PORT=6379
       - "REDIS_ARGS=--requirepass ${REDIS_PSWD}"
     networks:
-      - sso_net
+      - elemental_net
   nginx-proxy:
     image: nginxproxy/nginx-proxy:0.9.1-alpine
     container_name: sso-nginx-proxy
@@ -21,7 +21,7 @@ services:
     #environment:
     #  - DEFAULT_HOST=error.local
     networks:
-      - sso_net
+      - elemental_net
     depends_on:
       - redis
   api:
