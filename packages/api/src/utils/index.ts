@@ -12,3 +12,4 @@ export const getDirname = () => {
 export { objNotNull } from './misc';
 export * from './types';
 export * from './redis';
+export * from './authentication';

@@ -10,3 +10,4 @@ services:
     environment:
       - VIRTUAL_HOST=elemental-sso.local
       - VIRTUAL_PORT=8081
+      - NODE_ENV=development

@@ -1,12 +1,12 @@
 version: '3'
 services:
   redis:
-    image: redis:6
-    command: ["redis-server", "/etc/redis/redis.conf", "--requirepass ${REDIS_PSWD}"]
+    image: redis/redis-stack-server:latest
     volumes:
       - ./redis.conf:/etc/redis/redis.conf
     environment:
       - REDIS_PORT=6379
+      - "REDIS_ARGS=--requirepass ${REDIS_PSWD}"
     networks:
       - sso_net
   nginx-proxy:

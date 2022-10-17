@@ -7,6 +7,17 @@ Elemental Zcash SSO OAuth2 server
 git clone #...
 ```
 
+```sh
+# CLIENT_SECRET --- echo $(openssl rand -base64 72 -out /dev/stdout | sed -r 's/[^a-zA-Z0-9]//g' | tr -d '\n')
+```
+
+**DKIM Setup**
+
+```sh
+openssl genrsa -out private.key 2048 # Used by elemental-mail/nodemailer to sign each email
+openssl rsa -in private.key -pubout -out public.key # Published in DKIM TXT DNS record
+```
+
 ### Requirements
 
 - Docker (Docker Desktop or Docker Engine)
@@ -29,3 +40,23 @@ mkcert -cert-file certs/$HOST.crt -key-file certs/$HOST.key $HOST
 ```sh
 npm run start:local # alias for the docker-compose script
 ```
+
+## Resources
+
+- https://www.howtographql.com/graphql-js/6-authentication/
+- https://www.digitalocean.com/community/tutorials/how-to-build-a-graphql-api-with-golang-to-upload-files-to-digitalocean-spaces
+- https://github.com/thebergamo/realworld-graphql/blob/master/src/resources/users/resolver.js
+- https://www.toptal.com/graphql/creating-your-first-graphql-api
+- https://devdocs.magento.com/guides/v2.4/graphql/mutations/create-customer.html
+- https://www.apollographql.com/blog/backend/architecture/how-to-structure-graphql-server-code/#.w8djt4dyf
+- https://www.apollographql.com/blog/community/backend/graphql-at-facebook-by-dan-schafer/
+- 
+- https://app.postdrop.io/ - email HTML (for React templating?)
+- 
+
+**OAuth2**
+
+- https://github.com/curityio/react-haapi-demo/blob/master/src/components/OidcClient.js
+- https://github.com/curityio/react-haapi-demo/blob/master/src/components/HAAPIProcessor.js
+- 
+- 

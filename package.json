@@ -1,7 +1,7 @@
 {
   "name": "@elemental-zcash/sso",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.1",
   "workspaces": [
     "./packages/*"
   ],
@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up",
+    "start:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up --build",
     "start:staging": "docker compose -f docker-compose.yml -f docker-compose.staging.yml up",
     "start:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up"
   },
@@ -28,5 +28,7 @@
       "elemental-color": "0.0.5"
     }
   },
-  "homepage": "https://github.com/elemental-zcash/sso#readme"
+  "homepage": "https://github.com/elemental-zcash/sso#readme",
+  "dependencies": {},
+  "devDependencies": {}
 }
