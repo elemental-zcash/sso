@@ -29,6 +29,19 @@ RUN npm install
 ##Copy new files or directories into the filesystem of the container
 COPY . /usr/src/app
 
+# ENV APP_ENV
+ARG NEXT_PUBLIC_APP_ENV
+ENV NEXT_PUBLIC_APP_ENV=${NEXT_PUBLIC_APP_ENV}
+# ENV NEXT_PUBLIC_GRAPHQL_API={NEXT_PUBLIC_GRAPHQL_API}
+# ENV NEXT_PUBLIC_GRAPHQL_API_STAGING={NEXT_PUBLIC_GRAPHQL_API_STAGING}
+# ENV NEXT_PUBLIC_GRAPHQL_API_PRODUCTION={NEXT_PUBLIC_GRAPHQL_API_PRODUCTION}
+
+# ARG STAGE=development
+# COPY ./environments/.env.${STAGE}.template .env.production.local
+COPY .env.production .env.production
+COPY .env.development .env.development
+COPY .env.local .env.production
+
 #Execute commands in a new layer on top of the current image and commit the results
 # RUN npm run build
 RUN chmod 755 build.sh && /usr/src/app/build.sh

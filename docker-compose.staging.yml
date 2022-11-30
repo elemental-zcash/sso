@@ -11,6 +11,7 @@ services:
       - VIRTUAL_HOST=sso-staging-api.elementalzcash.com
       - VIRTUAL_PORT=8081
       - NODE_ENV=production
+      - APP_ENV=staging
   # web:
   #   environment:
   #     - VIRTUAL_HOST=elemental-sso.local

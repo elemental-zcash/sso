@@ -5,3 +5,4 @@ services:
       - VIRTUAL_HOST=elemental-sso.local
       - VIRTUAL_PORT=3000
       - NODE_ENV=development
+      - NEXT_PUBLIC_APP_ENV=local

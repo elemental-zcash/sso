@@ -4,4 +4,5 @@ services:
     environment:
       - VIRTUAL_HOST=sso-staging.elementalzcash.com
       - VIRTUAL_PORT=3000
-      - NODE_ENV=development
+      - NODE_ENV=production
+      - NEXT_PUBLIC_APP_ENV=staging

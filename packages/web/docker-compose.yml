@@ -6,11 +6,15 @@ services:
       - PORT=3000
     networks:
       - sso_net
-      - elemental_net
+      - sso_next_net
+      # - elemental_net
     # depends_on:
     #   - nginx-proxy
 networks:
   sso_net:
-  elemental_net:
+  sso_next_net:
     external: true
     driver: bridge
+  # elemental_net:
+  #   external: true
+  #   driver: bridge
