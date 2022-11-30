@@ -2,6 +2,7 @@ import log from 'loglevel';
 import argon2 from 'argon2';
 import * as TokenUtil from 'oauth2-server/lib/utils/token-util';
 import { addHours, addMinutes, isBefore } from 'date-fns';
+import fetch from 'node-fetch';
 // import ExpressO
 
 import { APIError, ErrorCodes } from '../utils';
@@ -12,9 +13,10 @@ import { User, UserType } from '../../models';
 import { generateId } from '../../controllers/user.controller';
 import * as AuthService from '../../services/auth.service';
 import * as MailService from '../../services/email.service';
-import { checkEmailVerificationLimit, checkUserRateLimit } from '../../services/rate-limit.service';
+import { checkEmailVerificationLimit, checkUserRateLimit, checkZcashaddressVerificationLimit } from '../../services/rate-limit.service';
 import { getIpFromReq } from '../../utils/misc';
 import { db } from '../../data';
+import { ElementalGraphQLError } from '../../errors';
 
 
 const aliasId = (user) => {
@@ -99,7 +101,7 @@ export default {
   },
   Mutation: {
     signup: async (_, { input }, context: GraphQLContext) => {
-      const { email, username, name, password: pswd } = input;
+      const { zcashaddress, email, username, name, password: pswd } = input;
       const pswdHsh = await argon2.hash(pswd);
 
       try {
@@ -116,7 +118,9 @@ export default {
           }
         }
         const publicId = await generateId(); // @ts-ignore
-        const user = await context.users.create(context.viewer, { publicId, unverifiedEmail: email, username, name, pswd: pswdHsh, isVerifiedEmail: false });
+        const user = await context.users.create(context.viewer, {
+          publicId, unverifiedEmail: email, unverifiedZcashaddress: zcashaddress, username, name, pswd: pswdHsh, isVerifiedEmail: false
+        });
 
         const authCode = await TokenUtil.generateRandomToken();
         const authCodeExpires = addMinutes((new Date()), 5);
@@ -124,8 +128,6 @@ export default {
         const authorizationCode = await context.authorizationCodes.create({
           authorizationCode: authCode, expiresAt: authCodeExpires, redirectUri: '', clientId: 'sso-api', userId: publicId,
         });
-
-        // const token = await context.token.create()
 
         if (!user || !authorizationCode?.authorizationCode) {
           return {
@@ -189,6 +191,73 @@ export default {
         user: aliasId(user),
         code: authorizationCode.authorizationCode,
       };
+    },
+    loginWithZcash: async (_, { address }, context: GraphQLContext) => {
+      let user = await context.users.findByPrivateZcashAddress({ isAuthenticating: true } as unknown as UserType, address);
+
+      if (!user?.publicId || !user.zcashaddress) {
+        throw new ElementalGraphQLError('Could not find an account', 'NOT_FOUND');
+      }
+
+      const { authCode, expiresAt } = await AuthService.createRandomAuthCode();
+
+      const authorizationCode = await context.authorizationCodes.create({
+        authorizationCode: authCode, expiresAt, redirectUri: '', clientId: 'sso-api', userId: user.publicId,
+      });
+
+      if (authorizationCode.authorizationCode) {
+        const message = await AuthService.encodeZcashAddressCode(address);
+
+        return {
+          __typename: 'LoginWithZcashResult',
+          message,
+        };
+      }
+
+      throw new ElementalGraphQLError('Could not find an account', 'NOT_FOUND');
+    },
+    sendZcashVerificationToken: async (_, { address }, context: GraphQLContext) => {
+      const user = await context.users.findByUnverifiedZcashaddress(context.viewer as unknown as UserType, address);
+      
+      log.debug('sendZcashVerificationToken: ', { user });
+
+      // log.debug('test echo: ', await (await fetch(`http://zecwallet_api:8001/api/echo?args=123`)).text())
+      if (!user?.unverifiedZcashaddress) {
+        throw new Error('Failed');
+      }
+
+      const token = await TokenUtil.generateRandomToken();
+      const expiresAt = addHours((new Date()), 8);
+      const updateRes = await context.users.update(context.viewer, user.publicId, {
+        zcashaddressConfirmation: { token, expiresAt },
+      } as any);
+      // log.debug('sendZcashVerificationToken: ', { updateRes, token });
+
+      const { allow, retryAfter } = await checkZcashaddressVerificationLimit(user.unverifiedZcashaddress);
+      if (allow && updateRes) {
+        log.debug('encoding token in memo');
+        const message = await AuthService.encodeZcashAddressValidationToken(address, token);
+
+        return {
+          __typename: 'EncryptedZcashMemoMessage',
+          message,
+        };
+      }
+      throw new Error('Failed');
+    },
+    verifyZcashAddress: async (_, { token }, context: GraphQLContext) => {
+      const user = await db.users.findByZcashAddressToken(token);
+      
+      if (!user) {
+        return false;
+      }
+      const { token: userEmailToken, expiresAt } = (user.zcashaddressConfirmation as any) || {};
+
+      if (token === userEmailToken && isBefore(new Date(), new Date(expiresAt))) {
+        await context.users.update(context.viewer, user.publicId, { zcashaddress: user.unverifiedZcashaddress, unverifiedZcashaddress: null });
+        return true;
+      }
+      return false;
     },
     verifyEmail: async (_, { token }, context: GraphQLContext) => {
       const user = await db.users.findByEmailToken(token);

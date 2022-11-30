@@ -35,6 +35,20 @@ const verificationEmailLimiterOutOfLimits = new RateLimiterRedis({
   duration: 0, // never expire
 });
 
+const verificationZcashaddressLimiter = new RateLimiterRedis({
+  storeClient: redisClient,
+  keyPrefix: 'verification_zcashaddress_per_day',
+  points: 5, // 5 attempts
+  duration: 15 * 60, // within 15 minutes
+});
+
+const verificationZcashaddressLimiterOutOfLimits = new RateLimiterRedis({
+  storeClient: redisClient,
+  keyPrefix: 'verification_zcashaddress_consecutive_outoflimits',
+  points: 99999, // doesn't matter much, this is just counter
+  duration: 0, // never expire
+});
+
 function getFibonacciBlockDurationMinutes(countConsecutiveOutOfLimits) {
   if (countConsecutiveOutOfLimits <= 1) {
     return 1;
@@ -125,6 +139,39 @@ export const checkEmailVerificationLimit = async (email): Promise<{ retryAfter?:
       if (resConsume.remainingPoints <= 0) {
         const resPenalty = await verificationEmailLimiterOutOfLimits.penalty(email);
         await verificationEmailLimiter.block(email, 60 * getFibonacciBlockDurationMinutes(resPenalty.consumedPoints));
+      }
+    } catch (rlRejected) {
+
+      if (rlRejected instanceof Error) {
+        throw rlRejected;
+      } else {
+        // res.set('Retry-After', String(Math.round(rlRejected.msBeforeNext / 1000)) || 1);
+        // res.status(429).send('Too Many Requests');
+        return { retryAfter: Math.round(rlRejected.msBeforeNext / 1000) || 1 };
+      }
+    }
+  }
+
+  return { allow: true };
+};
+
+export const checkZcashaddressVerificationLimit = async (address): Promise<{ retryAfter?: number, allow?: boolean }> => {
+  const resById = await verificationZcashaddressLimiter.get(address);
+
+  let retrySecs = 0;
+
+  if (resById !== null && resById.remainingPoints <= 0) {
+    retrySecs = Math.round(resById.msBeforeNext / 1000) || 1;
+  }
+
+  if (retrySecs > 0) {
+    return { retryAfter: retrySecs }
+  } else {
+    try {
+      const resConsume = await verificationZcashaddressLimiter.consume(address);
+      if (resConsume.remainingPoints <= 0) {
+        const resPenalty = await verificationZcashaddressLimiterOutOfLimits.penalty(address);
+        await verificationZcashaddressLimiter.block(address, 60 * getFibonacciBlockDurationMinutes(resPenalty.consumedPoints));
       }
     } catch (rlRejected) {
 

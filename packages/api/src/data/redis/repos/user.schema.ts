@@ -12,6 +12,8 @@ import { getRedisSchemaFromModel } from '../../../utils';
 export class UserEntity extends Entity {
   emailConfirmationToken: string;
   emailConfirmationExpiresAt: number;
+  zcashaddressConfirmationToken: string;
+  zcashaddressConfirmationExpiresAt: number;
   website: string;
   twitter: string;
   youtube: string;
@@ -21,6 +23,12 @@ export class UserEntity extends Entity {
     return {
       token: this.emailConfirmationToken,
       expiresAt: this.emailConfirmationExpiresAt,
+    }
+  }
+  get zcashaddressConfirmation() {
+    return {
+      token: this.zcashaddressConfirmationToken,
+      expiresAt: this.zcashaddressConfirmationExpiresAt,
     }
   }
   get socials() {
@@ -40,6 +48,8 @@ export const userSchema = new Schema(UserEntity, {
   ...schema,
   'emailConfirmationToken': { type: 'string' },
   'emailConfirmationExpiresAt': { type: 'number' },
+  'zcashaddressConfirmationToken': { type: 'string' },
+  'zcashaddressConfirmationExpiresAt': { type: 'number' },
   'website': { type: 'string' },
   'twitter': { type: 'string' },
   'youtube': { type: 'string' },

@@ -17,9 +17,12 @@ class User extends models.Model {
   joinedOn = models.DateTimeField();
   roles = models.TextArrayField();
   emailConfirmation = models.JSONField();
+  zcashaddressConfirmation = models.JSONField();
   bio = models.TextField();
   socials = models.JSONField();
   zcashaddress = models.TextField();
+  unverifiedZcashaddress = models.TextField();
+  publicZcashaddress = models.TextField();
   passwordReset = models.JSONField();
 
   Meta = {
