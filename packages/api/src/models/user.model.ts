@@ -10,12 +10,20 @@ class User extends models.Model {
   name = models.TextField();
   username = models.TextField();
   email = models.TextField();
-  totpSecret = models.TextField();
+  totp = models.JSONField();
   unverifiedEmail = models.TextField();
   isVerifiedEmail = models.BooleanField();
   pswd = models.TextField();
   joinedOn = models.DateTimeField();
   roles = models.TextArrayField();
+  emailConfirmation = models.JSONField();
+  zcashaddressConfirmation = models.JSONField();
+  bio = models.TextField();
+  socials = models.JSONField();
+  zcashaddress = models.TextField();
+  unverifiedZcashaddress = models.TextField();
+  publicZcashaddress = models.TextField();
+  passwordReset = models.JSONField();
 
   Meta = {
     db_table: 'users',

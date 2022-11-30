@@ -19,6 +19,7 @@ const reset = sql('reset.sql');
 const users = {
   create: sql('user/create.sql'),
   add: sql('user/add.sql'),
+  update: sql('user/update.sql'),
   remove: sql('user/remove.sql'),
   removeById: sql('user/remove-by-id.sql'),
   find: sql('user/find.sql'),

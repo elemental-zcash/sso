@@ -12,7 +12,7 @@ export default `
   }
 
   interface Actor {
-    id: String!
-    username: String!
+    id: ID!
+    username: String
   }
 `;

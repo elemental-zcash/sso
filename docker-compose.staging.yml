@@ -1,0 +1,19 @@
+version: '3' # Version of the Docker Compose file format
+services:
+  nginx-proxy:
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./docker/html:/var/www/html
+      - ./certs:/etc/nginx/certs
+      - ./docker/vhost.d:/etc/nginx/vhost.d:ro
+  api:
+    environment:
+      - VIRTUAL_HOST=sso-staging-api.elementalzcash.com
+      - VIRTUAL_PORT=8081
+      - NODE_ENV=production
+      - APP_ENV=staging
+  # web:
+  #   environment:
+  #     - VIRTUAL_HOST=elemental-sso.local
+  #     - VIRTUAL_PORT=3000
+  #     - NODE_ENV=development

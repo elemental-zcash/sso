@@ -41,11 +41,38 @@ export class UsersRepository extends SQLRepository<User, typeof sql> {
   async findByEmail(email: string): Promise<UserType> {
     return transformResult(await this.find({ email }));
   }
+  async findByZcashAddress(zcashaddress: string): Promise<UserType> {
+    return transformResult(await this.find({ zcashaddress }));
+  }
+  async findByUnverifiedEmail(email: string): Promise<UserType> {
+    return transformResult(await this.find({ unverifiedEmail: email }));
+  }
+  async findByUnverifiedZcashaddress(address: string): Promise<UserType> {
+    return transformResult(await this.find({ unverified_zcashaddress: address }));
+  }
+  async findByZcashAddressToken(token: string): Promise<UserType> {
+    return transformResult(await this.find({ "(zcashaddress_confirmation->>'token')": token }));
+  }
+  async findByEmailToken(token: string): Promise<UserType> {
+    return transformResult(await this.find({ "(email_confirmation->>'token')": token }));
+  }
+  async update({
+    publicId, name, email, totp, emailConfirmation, publicZcashaddress, zcashaddressConfirmation, passwordReset, unverifiedZcashaddress, unverifiedEmail, isVerifiedEmail, username, roles, pswd, bio, socials, zcashaddress
+  }) {
+    return await this.db.oneOrNone(sql.update, {
+      publicId, name, email, totp, emailConfirmation, unverifiedEmail, zcashaddressConfirmation, unverifiedZcashaddress, publicZcashaddress,
+      passwordReset, isVerifiedEmail, username, roles, pswd,
+      bio, socials, zcashaddress,
+    });
+    // return await this.model.objects.update({
+    //   publicId, name, email, totp, emailConfirmation, passwordReset, unverifiedEmail, isVerifiedEmail, username, roles, pswd,
+    // }, { publicId: id });
+  }
   async addUser({
     // accessToken, refreshToken, accessTokenExpiresOn, refreshTokenExpiresOn, clientId, userId,
-    publicId, name, email, totpSecret, unverifiedEmail, isVerifiedEmail, username, roles, pswd
+    publicId, name, email, totp, emailConfirmation, passwordReset, unverifiedEmail, unverifiedZcashaddress, isVerifiedEmail, username, roles, pswd
   }: UserType): Promise<UserTypeSQL> {
-    return await this.db.oneOrNone(sql.add, { publicId, name, email, totpSecret, unverifiedEmail, isVerifiedEmail, username, roles, pswd });
+    return await this.db.oneOrNone(sql.add, { publicId, name, email, totp, emailConfirmation, unverifiedEmail, unverifiedZcashaddress, passwordReset, isVerifiedEmail, username, roles, pswd });
     // log.debug('addCode: ', { res });
     // return transformResult(flattenSqlValues(res)[0]);
   }

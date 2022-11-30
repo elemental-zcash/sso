@@ -5,6 +5,8 @@ Elemental Zcash SSO OAuth2 server
 
 ```sh
 git clone #...
+docker network create -d bridge elemental_sso
+docker network create -d bridge sso_next_net
 ```
 
 ```sh
@@ -52,6 +54,8 @@ npm run start:local # alias for the docker-compose script
 - https://www.apollographql.com/blog/community/backend/graphql-at-facebook-by-dan-schafer/
 - 
 - https://app.postdrop.io/ - email HTML (for React templating?)
+- 
+- VERIFYING EMAILS: https://designmodo.com/verification-emails/
 - 
 
 **OAuth2**

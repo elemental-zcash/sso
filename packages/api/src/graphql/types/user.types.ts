@@ -1,12 +1,30 @@
 export default `
   scalar Date
 
-  type User {
+  type UserSocials {
+    youtube: String
+    instagram: String
+    twitter: String
+    website: String
+  }
+
+  type User implements Actor {
     id: ID!
-    username: String!
+    username: String
     name: String
     joinedOn: Date
     email: String
+    unverifiedEmail: String
+    isVerifiedEmail: Boolean
+    bio: String
+    socials: UserSocials
+    zcashaddress: String
+    publicZcashaddress: String
+  }
+
+  type SystemUser implements Actor {
+    id: ID!
+    username: String!
   }
 
   type Tokens {
@@ -34,9 +52,10 @@ export default `
   """
 
   input SignupInput {
-    email: String!
-    username: String!
-    name: String!
+    email: String
+    zcashaddress: String
+    username: String
+    name: String
     password: String!
   }
 
@@ -47,7 +66,7 @@ export default `
 
   type SignupError implements Error {
     message: String!
-    code: String
+    code: String!
   }
 
   union SignupResponse = SignupSuccess | SignupError
@@ -63,7 +82,7 @@ export default `
   }
   type LoginError implements Error {
     message: String!
-    code: String
+    code: String!
   }
 
   union LoginResponse = LoginSuccess | LoginError
@@ -75,9 +94,20 @@ export default `
     errorCode: String
   }
 
+  input UserInput {
+    name: String
+    username: String
+    publicZcashaddress: String
+    bio: String
+    website: String
+    twitter: String
+    youtube: String
+    instagram: String
+  }
+
   input UpdateUserInput {
     id: ID!
-    name: String
+    user: UserInput
   }
 
   type UpdateUserSuccess {
@@ -111,12 +141,26 @@ export default `
     code: String
   }
 
-  union ViewerResult = User | ViewerNotFoundError
+  type Viewer {
+    user: User
+    userId: String
+  }
+
+  union ViewerResult = Viewer | ViewerNotFoundError
+
+  type LoginWithZcashResult {
+    message: String
+  }
+
+  type EncryptedZcashMemoMessage {
+    message: String
+  }
 
   type Query {
     users: [User]
     user(id: ID!): UserResult
     userByUsername(name: String!): UserResult
+    getVerificationMessage(address: String!): String
     viewer: ViewerResult
   }
 
@@ -130,12 +174,14 @@ export default `
     """
     signup(input: SignupInput!): SignupResponse
     login(input: LoginInput!): LoginResponse
+    loginWithZcash(input: LoginInput!): LoginWithZcashResult
     verifyUser(token: String!): VerifyUserResponse
     updateUser(input: UpdateUserInput!): UpdateUserResponse
     deleteUser(id: ID!): DeleteResponse
-    verifyEmail(token: String!): MockResponse
-    sendVerificationEmail(email: String!): MockResponse
-    sendPasswordResetEmail(email: String!): MockResponse
-
+    verifyEmail(token: String!): Boolean
+    verifyZcashAddress(token: String!): Boolean
+    sendVerificationEmail(address: String!): Boolean
+    sendZcashVerificationToken(address: String!): EncryptedZcashMemoMessage
+    sendPasswordResetEmail(address: String!): Boolean
   }
 `;

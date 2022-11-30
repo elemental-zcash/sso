@@ -1,14 +1,26 @@
 import Head from 'next/head';
-import { Box } from 'elemental-react';
+import { Box, Text, Row } from 'elemental-react';
 import { Button } from '@elemental-zcash/components';
 import InputField from '@elemental-zcash/components/lib/forms/InputField';
 import TextInput from '@elemental-zcash/components/lib/forms/TextInput';
 
 import Section from '../components/Section';
-import RegisterForm from '../components/register/register-form';
+import { useApolloClient, useMutation, useQuery } from '@apollo/client';
+import GET_VIEWER from '../graphql/queries/viewer';
+import { Viewer, ViewerNotFoundError } from '../hooks/use-viewer';
+import VerifyEmailLoginBox from '../components/auth/verify-email-login-box';
+import SEND_VERIFICATION_EMAIL from '../graphql/mutations/send-verification-email';
+import { Link } from '../components/common';
+import { TextButton } from '@elemental-zcash/components/lib/buttons';
+// import RegisterForm from '../components/register/register-form';
 
 
 export default function Home() {
+  const { loading, data, error, client } = useQuery<{ viewer: Viewer | ViewerNotFoundError }>(GET_VIEWER);
+  const [sendVerificationEmail, { data: verificationData, loading: verificationLoading, error: verificationError }] = useMutation<{ sendVerificationEmail: boolean }, { address: string }>(SEND_VERIFICATION_EMAIL);
+  const apolloClient = useApolloClient();
+
+
   return (
     <Box flex={1} justifyContent="center" alignItems="center" minHeight="100vh">
       <Head>
@@ -17,7 +29,63 @@ export default function Home() {
       </Head>
 
       <Section width="100%" maxWidth={640}>
-        <RegisterForm />
+        {/* <RegisterForm /> */}
+        <Box mt={20} alignItems="center">
+          {data?.viewer?.__typename === 'Viewer' && data?.viewer?.userId ? (
+            <Box>
+              {data.viewer.user.isVerifiedEmail ? (
+                <>
+                  <Text center mb={16}>You are logged in.</Text>
+                  <Box mb={20}>
+                    <Link href={`/settings/profile`}>{/* @ts-ignore */}
+                      <TextButton m={0} color="blue">Go to Your Settings</TextButton>
+                    </Link>
+                  </Box>
+                  <Box mb={20}>
+                    <Link href={`/user/${data.viewer.user.id}`}>{/* @ts-ignore */}
+                      <TextButton m={0} color="blue">Go to Your Public Profile</TextButton>
+                    </Link>
+                  </Box>
+                  <Button onPress={() => {
+                    localStorage.clear();
+                    apolloClient.resetStore();
+                  }}>LOG OUT</Button>
+                </>
+              ) : (
+                <>
+                  <VerifyEmailLoginBox email={data.viewer.user.unverifiedEmail} onPressResend={async () => {
+                    const unverifiedEmail = (data?.viewer as Viewer)?.user?.unverifiedEmail;
+                    if (unverifiedEmail) {
+                      const { data: mutationData, errors } = await sendVerificationEmail({ variables: { address: unverifiedEmail }});
+
+                      // if (!errors && mutationData?.sendVerificationEmail) {
+                      //   router.push('/');
+                      // }
+                    }
+                  }} />
+                  <Button onPress={() => {
+                    localStorage.clear();
+                    apolloClient.resetStore();
+                  }}>LOG OUT</Button>
+                </>
+              )}
+            </Box>
+          ) : (
+            <Box>
+              <Link href="/auth/signup">
+                <Button>SIGN UP</Button>
+              </Link>
+              <Row flex={1}>
+                <Text style={{ display: 'inline' }}>
+                  {'Already have an account? '}
+                  <Link href="/auth/login">
+                    <Text color="blue" style={{ display: 'inline' }}>Sign In</Text>
+                  </Link>
+                </Text>
+              </Row>
+            </Box>
+          )}
+        </Box>
       </Section>
 
 
@@ -32,7 +100,7 @@ export default function Home() {
         </a>
       </footer> */}
 {/* @ts-ignore */}
-      <style jsx>{`
+      {/* <style jsx>{`
         .container {
           min-height: 100vh;
           padding: 0 0.5rem;
@@ -142,9 +210,9 @@ export default function Home() {
             flex-direction: column;
           }
         }
-      `}</style>
+      `}</style> */}
 {/* @ts-ignore */}
-      <style jsx global>{`
+      {/* <style jsx global>{`
         html,
         body {
           padding: 0;
@@ -156,7 +224,7 @@ export default function Home() {
         * {
           box-sizing: border-box;
         }
-      `}</style>
+      `}</style> */}
     </Box>
   )
 }

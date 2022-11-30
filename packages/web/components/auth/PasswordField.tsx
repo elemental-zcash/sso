@@ -15,7 +15,7 @@ const PasswordField = ({ error, label = 'Password', value, onChange }) => {
       {({ label, value }) => (
         <Row alignItems="center" position="relative">
           <TextInput
-            placeholder={label}
+            placeholder={label} // @ts-ignore
             value={value}
             onChange={onChange}
             type={isHidden ? 'password' : 'text'}

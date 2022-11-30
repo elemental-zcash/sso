@@ -1,19 +1,10 @@
 version: '3'
 services:
-  redis:
-    image: redis/redis-stack-server:latest
-    volumes:
-      - ./redis.conf:/etc/redis/redis.conf
-    environment:
-      - REDIS_PORT=6379
-      - "REDIS_ARGS=--requirepass ${REDIS_PSWD}"
-    networks:
-      - sso_net
   nginx-proxy:
     image: nginxproxy/nginx-proxy:0.9.1-alpine
     container_name: sso-nginx-proxy
-    #volumes:
-    #  - ./vhost.d:/etc/nginx/vhost.d:ro
+    # volumes:
+    #  - ./nginx/nginx.conf:/etc/nginx/conf.d/my_proxy.conf:ro
     # build: ./docker/nginx
     ports:
       - "80:80"
@@ -21,28 +12,43 @@ services:
     #environment:
     #  - DEFAULT_HOST=error.local
     networks:
-      - sso_net
-    depends_on:
-      - redis
+      - elemental_net
+      - sso_next_net
+  # mail_check:
+  #   image: reacherhq/backend:latest
+  #   container_name: mail_check
+  #   hostname: mail_check
+  #   ports:
+  #     - "8089:8089"
+  #   environment:
+  #     - PORT=8089
+  #     - RCH_HTTP_HOST=0.0.0.0
+  #   networks:
+  #     - elemental_net
+  #     - sso_net
   api:
     build: ./packages/api
     environment:
       - PORT=8081
     networks:
       - sso_net
+      # - sso_next_net
       - elemental_net
     env_file:
       ./packages/api/.env
     #volumes:
     #  - ./packages/api:/usr/src/app
-    links:
-      - redis
+    # links:
+    #   - redis
+      # - zecwallet_api
       # - database
     depends_on:
       - nginx-proxy
-      - redis
 networks:
   sso_net:
+  sso_next_net:
+    # external: true
+    driver: bridge
   elemental_net:
     external: true
     driver: bridge
