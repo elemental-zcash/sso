@@ -110,5 +110,7 @@ dist
 .local.README.md
 certs/
 .env
+# !packages/web/.env
+# .env.local
 lib/
 private.key
