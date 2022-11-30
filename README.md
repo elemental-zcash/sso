@@ -5,6 +5,8 @@ Elemental Zcash SSO OAuth2 server
 
 ```sh
 git clone #...
+docker network create -d bridge elemental_sso
+docker network create -d bridge sso_next_net
 ```
 
 ```sh
