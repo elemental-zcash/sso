@@ -2,6 +2,8 @@ import { ApolloClient, HttpLink, InMemoryCache, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
 
+import { config } from './config';
+
 
 const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (graphQLErrors)
@@ -14,7 +16,7 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
 });
 
 // const httpLink = new HttpLink({ uri: 'https://api.elemental-sso.local/graphql' })
-const httpLink = new HttpLink({ uri: 'https://sso-staging-api.elementalzcash.com/graphql' })
+const httpLink = new HttpLink({ uri: config.GRAPHQL_API_URL })
 
 const authLink = setContext((_, { headers }) => {
   // get the authentication token from local storage if it exists

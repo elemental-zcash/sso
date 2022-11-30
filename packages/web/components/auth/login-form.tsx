@@ -14,6 +14,7 @@ import { getErrorCode } from '../../graphql/utils';
 import VerifyEmailLoginBox from './verify-email-login-box';
 import SEND_VERIFICATION_EMAIL from '../../graphql/mutations/send-verification-email';
 import { useRouter } from 'next/router';
+import { config } from '../../config';
 
 enum LoginStage {
   LOGIN = 'LOGIN',
@@ -57,7 +58,7 @@ interface LoginInput {
 const TextButton = _TextButton as typeof Button;
 
 const getToken = async (code) => {
-  const res = await fetch(`${process.env.SSO_API_URL || 'https://api.elemental-sso.local'}/oauth/token`, {
+  const res = await fetch(`${config.OAUTH_URL}/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
@@ -109,104 +110,103 @@ const LoginForm = () => {
 
   return (
     <Box borderWidth={1} borderColor="#e2e2f2" borderRadius={4} p={40} flex={1}>
+      <Formik
+        initialValues={{ email: '', password: '' }}
+        // validate={(values) => {
+        //   const errors = {};
 
-          <Formik
-            initialValues={{ email: '', password: '' }}
-            // validate={(values) => {
-            //   const errors = {};
+        //   return errors;
+        // }}
+        validationSchema={LoginSchema}
+        onSubmit={async (values) => {
+          const { data: mutationData, errors } = await login({
+            variables: { input: { email: values.email, password: values.password } },
+          });
+          if (!errors && mutationData?.login?.__typename === 'LoginSuccess') {
+            const loginUser = mutationData.login.user;
+            const loginCode = mutationData.login.code;
 
-            //   return errors;
-            // }}
-            validationSchema={LoginSchema}
-            onSubmit={async (values) => {
-              const { data: mutationData, errors } = await login({
-                variables: { input: { email: values.email, password: values.password } },
-              });
-              if (!errors && mutationData?.login?.__typename === 'LoginSuccess') {
-                const loginUser = mutationData.login.user;
-                const loginCode = mutationData.login.code;
-
-                if (loginCode) {
-                  await getToken(loginCode);
-                }
-              } 
-            }}
-          >
-            {({ values, setFieldValue, errors, touched, handleChange, handleSubmit }) => (
-              <Box>
-                {{
-                  [LoginStage.LOGIN]: (
-                    <>
-                      <Text center bold fontSize={24} mb={3}>Welcome Back</Text>
-                      {(error || errorCode || errorMessage) && (
-                        <Box>
-                          <Text mb={20} color="error">{`Error: ${error?.message || errorMessage || errorCode}`}</Text>
-                        </Box>
-                      )}
-                      <Box>
-                        <InputField
-                          width="100%"
-                          label="Email"
-                          error={touched.email && errors.email}
-                          value={values.email}
-                        >
-                          {({ label, value }) =>
-                            <TextInput
-                              placeholder={label}
-                              // @ts-ignore
-                              value={value}
-                              onChange={handleChange('email')}
-                              // onChangeText={(text) => {
-                              //   setFieldValue('username', text);
-                              // }}
-                              pb={0}
-                              px={3}
-                              borderWidth={1}
-                              borderRadius={4}
-                              height={40}
-                              borderColor="#e2e2f2"
-                            />
-                          }
-                        </InputField>
-                      </Box>
-                      <Box>
-                        <PasswordField
-                          error={touched.password && errors.password}
-                          value={values.password}
-                          label="Password"
-                          onChange={handleChange('password')}
-                        />
-                      </Box>
-                      <Row justifyContent="space-between">
-                        <Link href="/auth/forgot-password">
-                          <TextButton m={0} color="blue" style={{ cursor: 'pointer' }}>
-                            Forgot Password?
-                          </TextButton>
-                        </Link>
-                        <Button onPress={handleSubmit} m={0} minWidth={128}>SIGN IN</Button>
-                      </Row>
-                    </>
-                  ),
-                  [LoginStage.EMAIL_VERIFICATION]: (
-                    <VerifyEmailLoginBox email={values.email} onPressResend={async () => {
-                      if (values.email && !errors.email) {
-                        const { data: mutationData, errors } = await sendVerificationEmail({ variables: { address: values.email }});
-
-                        // if (!errors && mutationData?.sendVerificationEmail) {
-                        //   router.push('/');
-                        // }
-                      }
-                    }} />
-                  ),
-                  [LoginStage.LOGGED_IN]: (
+            if (loginCode) {
+              await getToken(loginCode);
+            }
+          } 
+        }}
+      >
+        {({ values, setFieldValue, errors, touched, handleChange, handleSubmit }) => (
+          <Box>
+            {{
+              [LoginStage.LOGIN]: (
+                <>
+                  <Text center bold fontSize={24} mb={3}>Welcome Back</Text>
+                  {(error || errorCode || errorMessage) && (
                     <Box>
-                      <Text>You are now logged in!</Text>
+                      <Text mb={20} color="error">{`Error: ${error?.message || errorMessage || errorCode}`}</Text>
                     </Box>
-                  )
-                }[loginStage]}
-              </Box>
-            )}
-          </Formik>
+                  )}
+                  <Box>
+                    <InputField
+                      width="100%"
+                      label="Email"
+                      error={touched.email && errors.email}
+                      value={values.email}
+                    >
+                      {({ label, value }) =>
+                        <TextInput
+                          placeholder={label}
+                          // @ts-ignore
+                          value={value}
+                          onChange={handleChange('email')}
+                          // onChangeText={(text) => {
+                          //   setFieldValue('username', text);
+                          // }}
+                          pb={0}
+                          px={3}
+                          borderWidth={1}
+                          borderRadius={4}
+                          height={40}
+                          borderColor="#e2e2f2"
+                        />
+                      }
+                    </InputField>
+                  </Box>
+                  <Box>
+                    <PasswordField
+                      error={touched.password && errors.password}
+                      value={values.password}
+                      label="Password"
+                      onChange={handleChange('password')}
+                    />
+                  </Box>
+                  <Row justifyContent="space-between">
+                    <Link href="/auth/forgot-password">
+                      <TextButton m={0} color="blue" style={{ cursor: 'pointer' }}>
+                        Forgot Password?
+                      </TextButton>
+                    </Link>
+                    <Button onPress={handleSubmit} m={0} minWidth={128}>SIGN IN</Button>
+                  </Row>
+                </>
+              ),
+              [LoginStage.EMAIL_VERIFICATION]: (
+                <VerifyEmailLoginBox email={values.email} onPressResend={async () => {
+                  if (values.email && !errors.email) {
+                    const { data: mutationData, errors } = await sendVerificationEmail({ variables: { address: values.email }});
+
+                    // if (!errors && mutationData?.sendVerificationEmail) {
+                    //   router.push('/');
+                    // }
+                  }
+                }} />
+              ),
+              [LoginStage.LOGGED_IN]: (
+                <Box>
+                  <Text>You are now logged in!</Text>
+                </Box>
+              )
+            }[loginStage]}
+          </Box>
+        )}
+      </Formik>
     </Box>
   );
 };

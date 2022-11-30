@@ -1,10 +1,13 @@
 const path = require('path');
 const withTM = require('next-transpile-modules')([
-  '@elemental-zcash/components', '@elemental-design/material-color-utilities', 'react-primitives-svg', 'elemental-react',
+  '@elemental-zcash/components', '@elemental-pay/components', '@elemental-design/material-color-utilities', 'react-primitives-svg', 'elemental-react',
 ]);
 
 module.exports = withTM({
   poweredByHeader: false,
+  // env: {
+  //   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  // },
   // pageExtensions: getBareExtensions(['web']),
   // pageExtensions: ['web', 'web.js', 'mdx', 'md', 'jsx', 'js', 'tsx', 'ts'],
   webpack: (config) => ({
