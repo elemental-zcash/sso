@@ -56,6 +56,9 @@ const makeLink = (id, value) => {
       return `https://youtube.com/${value}`;
     }
     case 'website': {
+      if (!value.includes['https://'] && !value.includes('http://')) {
+        return `https://${value}`; // Should we be forcing https? :D
+      }
       return value;
     }
     default: {
@@ -210,6 +213,7 @@ export default function User() {
                       <>
                         <Section width="100%" maxWidth={640}>
                           <InvoiceElement
+                            currency="ZEC"
                             amount={amount}
                             address={userData?.zcashaddress}
                             memo={memo}
@@ -292,9 +296,9 @@ export default function User() {
                 { id: 'twitter', value: twitter },
                 { id: 'instagram', value: instagram },
                 { id: 'youtube', value: youtube },
-                { id: 'website', value: website ,
-                }].map(({ id, value }) => (
-                  <a href={makeLink(id, value)} target="_blank" rel="noopener">
+                { id: 'website', value: website}
+              ].filter(({ value }) => value).map(({ id, value }) => (
+                  <a key={id} href={makeLink(id, value)} target="_blank" rel="noopener">
                     <Box key={id} bg="white" borderRadius={12} mb={20} p={16}>
                       <Text center>
                         {id}
