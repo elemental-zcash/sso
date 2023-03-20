@@ -1,0 +1,15 @@
+{
+  "clients": [{
+    "client_name": "sso-api",
+    "token_endpoint_auth_method": "none",
+    "grants": ["authorization_code", "refresh_token"],
+    "access_token_lifetime": 5184000,
+    "authorization_code_lifetime": 300
+  }, {
+    "client_name": "sso-system",
+    "token_endpoint_auth_method": "client_secret_basic",
+    "grants": ["authorization_code", "refresh_token"],
+    "access_token_lifetime": 5184000,
+    "authorization_code_lifetime": 300
+  }]
+}
