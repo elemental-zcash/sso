@@ -1,8 +1,10 @@
 from marshmallow import validate, validates, validates_schema, \
     ValidationError, post_dump
+from datetime import datetime
 from app import ma
 from marshmallow import fields
-import db
+from db import db
+from sqlalchemy import select
 
 from auth import token_auth
 from models import User
@@ -66,20 +68,50 @@ class LoginSchema(ma.Schema):
     password = fields.String(required=True, load_only=True, validate=validate.Length(min=8))
     remember_me = fields.Boolean()
 
+class SignupSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = User
+        ordered = True
+    email = fields.Email(required=True, validate=[validate.Length(max=120), validate.Email()])
+    public_zcashaddress = fields.String(required=True, validate=[validate.Length(max=120)])
+    password = fields.String(required=True, load_only=True, validate=validate.Length(min=8))
+    @validates_schema
+    def validate_requires(self, data):
+        if 'email' in data and 'publicAddress' not in data:
+            raise ValidationError('email is required when public zaddress is not set')
+
 
 class UserSchema(ma.SQLAlchemySchema):
     class Meta:
         model = User
         ordered = True
+        # exclude = ["email", "zcashaddress"]
 
     id = ma.auto_field(dump_only=True)
+    uuid = ma.auto_field(dump_only=True)
     url = ma.String(dump_only=True)
-    username = ma.auto_field(required=True,
-                             validate=validate.Length(min=3, max=64))
-    email = ma.auto_field(required=True, validate=[validate.Length(max=120),
-                                                   validate.Email()])
-    password = ma.String(required=True, load_only=True,
-                         validate=validate.Length(min=3))
+    joined_on = ma.auto_field(dump_only=True)
+    last_seen = ma.auto_field(dump_only=True)
+    # username = ma.auto_field(
+    #     required=True,validate=validate.Length(min=3, max=64)
+    # )
+    email = ma.String(
+        required=True,
+        load_only=True,
+        validate=[validate.Length(max=120), validate.Email()]
+    )
+    zcashaddress = ma.String(
+        required=True,
+        load_only=True,
+        validate=[validate.Length(max=255)]
+    )
+    # unverified_email = ma.auto_field(
+    #     required=True,
+    #     validate=[validate.Length(max=120), validate.Email()]
+    # )
+    password = ma.String(
+        required=True, load_only=True, validate=validate.Length(min=8)
+    )
     avatar_url = ma.String(dump_only=True)
     # about_me = ma.auto_field()
     # first_seen = ma.auto_field(dump_only=True)
@@ -87,29 +119,47 @@ class UserSchema(ma.SQLAlchemySchema):
     # posts_url = ma.URLFor('posts.user_all', values={'id': '<id>'},
     #                       dump_only=True)
 
-    @validates('username')
-    def validate_username(self, value):
-        if not value[0].isalpha():
-            raise ValidationError('Username must start with a letter')
-        user = token_auth.current_user()
-        old_username = user.username if user else None
-        if value != old_username and \
-                db.session.scalar(User.select().filter_by(username=value)):
-            raise ValidationError('Use a different username.')
+    # @validates('username')
+    # def validate_username(self, value):
+    #     if not value[0].isalpha():
+    #         raise ValidationError('Username must start with a letter')
+    #     user = token_auth.current_user()
+    #     old_username = user.username if user else None
+    #     if value != old_username and \
+    #             db.session.scalar(User.select().filter_by(username=value)):
+    #         raise ValidationError('Use a different username.')
 
     @validates('email')
     def validate_email(self, value):
         user = token_auth.current_user()
         old_email = user.email if user else None
         if value != old_email and \
-                db.session.scalar(User.select().filter_by(email=value)):
+                db.session.scalar(select(User).filter_by(email=value)):
             raise ValidationError('Use a different email.')
+    @validates('zcashaddress')
+    def validate_zcashaddress(self, value):
+        user = token_auth.current_user()
+        old_email = user.email if user else None
+        if value != old_email and \
+                db.session.scalar(select(User).filter_by(zcashaddress=value)):
+            raise ValidationError('Use a different zcash address.')
 
-    @post_dump
-    def fix_datetimes(self, data, **kwargs):
-        data['first_seen'] += 'Z'
-        data['last_seen'] += 'Z'
-        return data
+    # @post_dump
+    # def map_emails(self, data, **kwargs):
+    #     # data['id'] = str(data['id'])
+    #     data['unverified_zcashaddress'] = data['zcashaddress']
+    #     del data['zcashaddress']
+    #     data['unverified_email'] = data['email']
+    #     del data['email']
+    # @post_dump
+    # def fix_datetimes(self, data, **kwargs):
+    #     if not 'joined_on' in data:
+    #         data['joined_on'] = datetime.utcnow()
+    #     elif not 'last_seen' in data:
+    #         data['last_seen'] = datetime.utcnow()
+    #     data['joined_on'] += 'Z'
+    #     data['last_seen'] += 'Z'
+    #     return data
 
 
 class UpdateUserSchema(UserSchema):
