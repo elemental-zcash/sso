@@ -11,7 +11,7 @@ from authlib.integrations.sqla_oauth2 import (
 from authlib.oauth2.rfc6749 import grants
 from authlib.oauth2.rfc7636 import CodeChallenge
 
-import db
+from db import db
 from models.user import User
 from models.oauth import OAuth2Client, OAuth2AuthorizationCode, OAuth2Token
 
@@ -54,9 +54,15 @@ class AuthorizationCodeGrant(grants.AuthorizationCodeGrant):
 
 
 class PasswordGrant(grants.ResourceOwnerPasswordCredentialsGrant):
+    TOKEN_ENDPOINT_AUTH_METHODS = [
+        'client_secret_basic',
+        'client_secret_post',
+        'none',
+    ]
+
     def authenticate_user(self, username, password):
-        user = User.query.filter_by(username=username).first()
-        if user is not None and user.check_password(password):
+        user = User.query.filter_by(unverified_email=username).first()
+        if user is not None and user.verify_password(password):
             return user
 
 
