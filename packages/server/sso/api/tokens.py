@@ -5,8 +5,7 @@ from apifairy import authenticate, body, response, other_responses
 from db import db
 # from api.email import send_email
 from models import User, Token
-from schemas import TokenSchema, PasswordResetRequestSchema, \
-    PasswordResetSchema, EmptySchema
+from api.schemas import TokenSchema, PasswordResetRequestSchema, PasswordResetSchema, EmptySchema
 
 tokens = Blueprint('tokens', __name__)
 token_schema = TokenSchema()
