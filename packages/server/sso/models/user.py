@@ -3,9 +3,11 @@ from app import db
 from flask import current_app
 from flask_login import AnonymousUserMixin, UserMixin
 from sqlalchemy.dialects.postgresql import ENUM
-from itsdangerous import Serializer
+from itsdangerous import Serializer, URLSafeTimedSerializer
 from itsdangerous import BadSignature, SignatureExpired
 from sqlalchemy import orm
+from sqlalchemy.ext.hybrid import hybrid_property
+from nanoid import generate as nanoid
 import secrets
 
 from passlib.hash import argon2
@@ -105,16 +107,19 @@ class Role(db.Model):
     def __repr__(self):
         return '<Role {}>'.format(self.name)
 
+def generate_nanoid():
+    return str(nanoid())
+
 class User(Updateable, db.Model):
-    """Data model for user accounts."""
     __tablename__ = 'users'
 
     # __tablename__ = "flasksqlalchemy-tutorial-users"
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True, nullable=False)
-    created = db.Column(db.DateTime, nullable=False)
+    username = db.Column(db.String(64), index=True, unique=True, nullable=True)
+    joined_on = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
     bio = db.Column(db.Text, nullable=True)
-    admin = db.Column(db.Boolean, nullable=False)
+    admin = db.Column(db.Boolean, nullable=True)
     roles = db.relationship(
         'Role',
         secondary=roles,
@@ -124,41 +129,132 @@ class User(Updateable, db.Model):
     tokens: db.WriteOnlyMapped['Token'] = db.relationship(
             back_populates='user')
 
+    uuid = db.Column(db.String(255), unique=True, index=True, default=generate_nanoid)
     email_confirmed = db.Column(db.Boolean, default=False)
+    is_confirmed = db.Column(db.Boolean, default=False)
+    zcashaddress_confirmed = db.Column(db.Boolean, default=False)
     first_name = db.Column(db.String(64), index=True)
     last_name = db.Column(db.String(64), index=True)
-    email = db.Column(db.String(64), unique=True, index=True)
-    password_hash = db.Column(db.String(128))
+    _email = db.Column('email', db.String(255), unique=True, index=True)
+    unverified_email = db.Column(db.String(255), unique=True, index=True)
+    _zcashaddress = db.Column('zcashaddress', db.Text, nullable=True)
+    unverified_zcashaddress = db.Column(db.Text, nullable=True)
+    password_hash = db.Column(db.Text, nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
+    @hybrid_property
+    def email(self):
+        return self._email
+    
+    @email.setter
+    def email(self, email):
+        self.unverified_email = email
+
+    @hybrid_property
+    def zcashaddress(self):
+        return self._zcashaddress
+    
+    @zcashaddress.setter
+    def zcashaddress(self, zcashaddress):
+        self.unverified_zcashaddress = zcashaddress
 
     @property
     def password(self):
         raise AttributeError('`password` is not a readable attribute')
+
+    def generate_uuid(self):
+        if (self.uuid is None):
+            self.uuid = nanoid()
 
     @password.setter
     def password(self, password):
         self.password_hash = argon2.hash(password)
 
     def verify_password(self, password):
-        return argon2.verify(self.password_hash, password)
+        return argon2.verify(password, self.password_hash)
 
-    def generate_confirmation_token(self, expiration=604800):
-        """Generate a confirmation token to email a new user."""
+    def generate_email_confirmation_token(self):
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        return s.dumps({'confirm_email': self.id}, salt='confirm_email')
 
-        s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'confirm': self.id})
+    def confirm_email(self, token, expiration=86400):
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token, max_age=expiration, salt='confirm_email')
+        except:
+            return False
+        if data.get('confirm_email') != self.id:
+            return False
+        self.confirmed = True
+        self.email = self.unverified_email
+        db.session.add(self)
+        return True
 
-    def generate_email_change_token(self, new_email, expiration=3600):
-        """Generate an email change token to email an existing user."""
-        s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'change_email': self.id, 'new_email': new_email})
+    def generate_zcashaddress_confirmation_token(self):
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        return s.dumps({'confirm_zcashaddress': self.id}, salt='confirm_zcashaddress')
+
+
+    def confirm_zcashaddress(self, token, expiration=86400):
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token, max_age=expiration, salt='confirm_zcashaddress')
+        except:
+            return False
+        if data.get('confirm_zcashaddress') != self.id:
+            return False
+        self.confirmed = True
+        db.session.add(self)
+        return True
+
+    def generate_reset_password_token(self):
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        return s.dumps({'reset_password': self.id}, salt='reset_password')
+
+    @staticmethod
+    def reset_password(token, new_password, expiration=3600):
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token, salt='reset_password', max_age=expiration)
+        except:
+            return False
+        user = User.query.get(data.get('reset_password'))
+        if user is None:
+            return False
+        user.password = new_password
+        db.session.add(user)
+        return True
+
+    def generate_email_change_token(self, new_email):
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        return s.dumps(
+            {'change_email': self.id, 'new_email': new_email},
+
+        )
+
+    def change_email(self, token, expiration=3600):
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token, salt='change_email', max_age=expiration)
+        except:
+            return False
+        if data.get('change_email') != self.id:
+            return False
+        new_email = data.get('new_email')
+        if new_email is None:
+            return False
+        if self.query.filter_by(email=new_email).first() is not None:
+            return False
+        self.email = new_email
+        self.avatar_hash = self.gravatar_hash()
+        db.session.add(self)
+        return True
+
+    def get_user_id(self):
+        return self.id
 
     def generate_password_reset_token(self, expiration=3600):
-        """
-        Generate a password reset change token to email to an existing user.
-        """
-        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'reset': self.id})
 
     def has_role(self, name):
@@ -167,13 +263,48 @@ class User(Updateable, db.Model):
                 return True
             return False
 
-    def __init__(self, username=""):
-        default = Role.query.filter_by(name="default").one()
-        self.roles.append(default)
-        self.username = username
+    def serialize(self, include_email=False):
+        data = {
+            'id': self.id,
+            'username': self.username,
+            # 'last_seen': self.last_seen.isoformat() + 'Z',
+            'about_me': self.about_me,
+            'post_count': self.posts.count(),
+            'follower_count': self.followers.count(),
+            'followed_count': self.followed.count(),
+            '_links': {
+                # 'self': url_for('api.get_user', id=self.id),
+                # 'followers': url_for('api.get_followers', id=self.id),
+                # 'followed': url_for('api.get_followed', id=self.id),
+                'avatar': self.avatar(128)
+            }
+        }
+        if include_email:
+            data['email'] = self.email
+        return data
+
+    def deserialize(self, data, new_user=False):
+        for field in ['username', 'email', 'about_me']:
+            if field in data:
+                setattr(self, field, data[field])
+        if new_user and 'password' in data:
+            self.password = data['password']
+        if new_user and 'email' in data:
+            self.email = data['email']
+
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        # if (self.uuid is not None):
+        #     self.generate_uuid()
+    #     if ('email' in kwargs):
+    #         self.unverified_email = kwargs.get('email')
+    # def __init__(self, email=""):
+    #     # default = Role.query.filter_by(name="default").one()
+    #     # self.roles.append(default)
+    #     self.email = email
 
     def __repr__(self):
-        return "<User {}>".format(self.username)
+        return "<User {}>".format(self.uuid)
 
 
 class AnonymousUser(AnonymousUserMixin):
