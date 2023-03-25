@@ -71,12 +71,13 @@ def generate_client(data, token_endpoint_auth_method='none'):
     client_id_issued_at = int(time.time())
     client = OAuth2Client(
         client_id=client_id,
-        client_id_issued_at=client_id_issued_at
+        client_id_issued_at=client_id_issued_at,
+        client_name=data.get("client_name")
     )
     client_metadata = {
         "client_name": data.get("client_name"),
         "client_uri": data.get("client_uri"),
-        "grant_types": data.get("grant_types"),
+        "grant_types": data.get("grants"),
         "redirect_uris": data.get("redirect_uris"),
         "response_types": data.get("response_types"),
         "scope": data.get("scope"),
@@ -85,7 +86,7 @@ def generate_client(data, token_endpoint_auth_method='none'):
     client.set_client_metadata(client_metadata)
     if token_endpoint_auth_method == 'none':
         client.client_secret = ''
-    elif current_app.config.get('CLIENT_SECRETS') != 'None' & current_app.config.get('CLIENT_SECRETS').get(data.get("client_name")) != 'None':
+    elif current_app.config.get('CLIENT_SECRETS') != 'None' and current_app.config.get('CLIENT_SECRETS').get(data.get("client_name")) != 'None':
         client.client_secret = current_app.config.get('CLIENT_SECRETS').get(data.get("client_name"))
     else:
         client.client_secret = gen_salt(48)
@@ -157,10 +158,6 @@ def authorize():
 
 @bp.route('/oauth/token', methods=['POST'])
 def issue_token():
-    # TODO: Don't hard code the client_id and find it by client_name
-    # Might need to refactor it into a Postgres JSON field
-    client = OAuth2Client.query.filter_by(client_id='kG7DwrwlOC72vGX4PyZstyHx').first()
-
     return authorization.create_token_response()
 
 
