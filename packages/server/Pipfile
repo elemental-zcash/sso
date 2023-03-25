@@ -20,6 +20,10 @@ flask-marshmallow = "*"
 marshmallow-sqlalchemy = "*"
 argon2-cffi = "*"
 nanoid = "*"
+pytest = "*"
+coverage = "*"
+pylint = "*"
+pytest-cov = "*"
 
 [dev-packages]
 

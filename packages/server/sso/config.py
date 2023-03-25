@@ -33,3 +33,8 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
   TESTING = True
+  SECRET_KEY = 'TESTING123'
+  CLIENT_SECRETS = {
+    'sso-system': 'TESTING1234'
+  }
+  SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL_TESTING']
