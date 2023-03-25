@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from app import db
 from flask import current_app
 from flask_login import AnonymousUserMixin, UserMixin
 from sqlalchemy.dialects.postgresql import ENUM
@@ -11,6 +10,8 @@ from nanoid import generate as nanoid
 import secrets
 
 from passlib.hash import argon2
+
+from db import db
 
 class Updateable:
     def update(self, data):
@@ -177,7 +178,7 @@ class User(Updateable, db.Model):
         s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         return s.dumps({'confirm_email': self.id}, salt='confirm_email')
 
-    def confirm_email(self, token, expiration=86400):
+    def confirm_email(self, token, expiration=28800):
         s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token, max_age=expiration, salt='confirm_email')
@@ -185,7 +186,8 @@ class User(Updateable, db.Model):
             return False
         if data.get('confirm_email') != self.id:
             return False
-        self.confirmed = True
+        self.is_confirmed = True
+        self.email_confirmed = True
         self.email = self.unverified_email
         db.session.add(self)
         return True
@@ -195,7 +197,7 @@ class User(Updateable, db.Model):
         return s.dumps({'confirm_zcashaddress': self.id}, salt='confirm_zcashaddress')
 
 
-    def confirm_zcashaddress(self, token, expiration=86400):
+    def confirm_zcashaddress(self, token, expiration=28800):
         s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token, max_age=expiration, salt='confirm_zcashaddress')
