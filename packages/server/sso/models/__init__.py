@@ -1,2 +1,2 @@
-from models.user import User, Token
-from models.oauth import OAuth2AuthorizationCode, OAuth2Client, OAuth2Token
+from .user import User, Token
+from .oauth import OAuth2AuthorizationCode, OAuth2Client, OAuth2Token
