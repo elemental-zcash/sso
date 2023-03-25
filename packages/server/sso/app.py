@@ -28,34 +28,17 @@ apifairy = APIFairy()
 ma = Marshmallow()
 cors = CORS()
 
-# oauth2_client = OAuth2Client.query.filter_by(client_id='kG7DwrwlOC72vGX4PyZstyHx').first()
-
-# oauth2_client.set_client_metadata({
-#     "client_name": oauth2_client.metadata.client_name,
-#     "client_uri": oauth2_client.metadata.client_uri,
-#     "grant_types": oauth2_client.metadata.grant_types + ['password'],
-#     "redirect_uris": oauth2_client.metadata.redirect_uris,
-#     "response_types": oauth2_client.metadata.response_types,
-#     "scope": oauth2_client.metadata.scope,
-#     "token_endpoint_auth_method": oauth2_client.metadata.token_endpoint_auth_method,
-# })
 
 @click.command()
 @with_appcontext
 def create_clients():
-    from routes.oauth2 import generate_client
-    with open(os.path.join(current_app.root_path, "oauth_clients.json"), "r") as jsonfile:
-        data = json.load(jsonfile)
-        print("Read successful")
-    # print(data["clients"])
-    for client in data["clients"]:
-        generate_client(client)
+    OAuth2Client.insert_clients()
 
     return
 
-def create_app():
+def create_app(config_name = None):
     app = Flask(__name__)
-    app.config.from_object(os.environ['APP_SETTINGS'])
+    app.config.from_object(config_name or os.environ['APP_SETTINGS'])
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
@@ -73,8 +56,8 @@ def create_app():
     from api import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
 
-    from routes.auth import bp as auth_bp
-    app.register_blueprint(auth_bp, url_prefix='/auth')
+    # from api.auth import bp as auth_bp
+    # app.register_blueprint(auth_bp, url_prefix='/auth')
 
     from routes.oauth2 import bp as oauth2_bp
     app.register_blueprint(oauth2_bp, url_prefix='')

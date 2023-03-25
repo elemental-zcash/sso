@@ -1,5 +1,8 @@
 import time
-from app import db;
+import os
+import json
+from flask import current_app
+from db import db;
 
 from authlib.integrations.sqla_oauth2 import (
     OAuth2ClientMixin,
@@ -16,6 +19,18 @@ class OAuth2Client(db.Model, OAuth2ClientMixin):
     user_id = db.Column(
         db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
     user = db.relationship('User')
+    client_name = db.Column(db.String(120), nullable=True)
+
+    @staticmethod
+    def insert_clients():
+        from routes.oauth2 import generate_client
+        with open(os.path.join(current_app.root_path, "oauth_clients.json"), "r") as jsonfile:
+            data = json.load(jsonfile)
+            print("Read successful")
+        # print(data["clients"])
+        for client in data["clients"]:
+            generate_client(client)
+        return
 
 
 class OAuth2AuthorizationCode(db.Model, OAuth2AuthorizationCodeMixin):

@@ -18,6 +18,8 @@ apifairy = "*"
 flask-cors = "*"
 flask-marshmallow = "*"
 marshmallow-sqlalchemy = "*"
+argon2-cffi = "*"
+nanoid = "*"
 
 [dev-packages]
 

@@ -114,3 +114,4 @@ certs/
 # .env.local
 lib/
 private.key
+.vscode
