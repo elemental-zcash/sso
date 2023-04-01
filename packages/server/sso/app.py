@@ -10,14 +10,26 @@ from flask_cors import CORS
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from apifairy import APIFairy
+from dotenv import load_dotenv
 import click
 import json
+import sys
+import logging
 
 import os
 
 from db import db
 from models import User, OAuth2Client
 from oauth2 import config_oauth
+
+load_dotenv('.env') # FIXME: For Docker, maybe better to use env_file
+
+# FIXME: This is for Docker, maybe there's a better alternative
+os.environ['AUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+# log = logging.getLogger('authlib')
+# log.addHandler(logging.StreamHandler(sys.stdout))
+# log.setLevel(logging.DEBUG)
 
 
 # app = Flask(__name__)
@@ -35,6 +47,11 @@ def create_clients():
     OAuth2Client.insert_clients()
 
     return
+
+@click.command()
+@with_appcontext
+def reset_db():
+    db.drop_all()
 
 def create_app(config_name = None):
     app = Flask(__name__)
