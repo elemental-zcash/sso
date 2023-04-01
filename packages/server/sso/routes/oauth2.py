@@ -154,9 +154,9 @@ def authorize():
             'request': {'scope': grant.request.scope }\
         }})
         # return render_template('authorize.html', user=user, grant=grant)
-    if not user and 'username' in request.form:
-        username = request.form.get('username')
-        user = User.query.filter_by(username=username).first()
+    # if not user and 'username' in request.form:
+    #     username = request.form.get('username')
+    #     user = User.query.filter_by(username=username).first()
     if request.form['confirm']:
         grant_user = user
     else:
