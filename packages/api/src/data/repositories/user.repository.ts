@@ -186,6 +186,7 @@ class UserRepository extends Repository {
     const canSee = checkCanSee(viewer, user);
     log.debug({ canSee });
     // FIXME: Integrate into permissioning layer
+    // @ts-ignore
     if ((viewer.isPublic || viewer.userId !== user.publicId) && !viewer.isAuthenticating) {
       const { id, publicId, name, username, socials, bio, zcashaddress } = user;
 
@@ -351,21 +352,24 @@ class UserRepository extends Repository {
 
 
 const checkCanSee = (viewer: Viewer, data: UserEntity) => {
-  if (viewer.isAuthenticating) {
-    return true;
-  }
-  return viewer.userId === data.publicId;
+  return false
+  // if (viewer.isAuthenticating) {
+  //   return true;
+  // }
+  // return viewer.userId === data.publicId;
 }
 
 const checkCanCreate = (viewer: Viewer, data: UserType) => {
-  return Boolean(viewer.isPublic && data.publicId);
+  return false;
+  // return Boolean(viewer.isPublic && data.publicId);
 }
 
 const checkCanUpdate = (viewer: Viewer, data: UserType) => {
-  if (viewer.isAuthenticating) {
-    return true;
-  }
-  return viewer.userId === data.publicId;
+  return false;
+  // if (viewer.isAuthenticating) {
+  //   return true;
+  // }
+  // return viewer.userId === data.publicId;
 }
 
 
