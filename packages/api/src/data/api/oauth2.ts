@@ -70,7 +70,55 @@ class OAuth2Client {
     return await response.json();
   }
 
-  async getAuthorize(scope, state, clientId, redirectUri) {
+  async authorize(token, scope, clientId, redirectUri, confirm) {
+    const state = Math.random().toString(36).substring(2);
+    const url = `${this.config.authorizationEndpoint}`;
+
+    const queryParams = new URLSearchParams();
+    // client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&state=${state}`
+    queryParams.append('response_type', 'code');
+    queryParams.append('client_id', clientId);
+    queryParams.append('redirect_uri', redirectUri);
+    queryParams.append('state', state);
+    queryParams.append('scope', scope);
+
+    const body = new URLSearchParams();
+    if (confirm) {
+      body.append('confirm', 'True');
+    }
+
+    const response = await fetch(`${url}?${queryParams.toString()}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Bearer ${token}`
+        // 'Authorization': `Basic ${encodeCredentials(process.env.OAUTH_API_CLIENT_ID, process.env.OAUTH_API_CLIENT_SECRET)}`,
+      },
+      body: body.toString(),
+      redirect: 'manual',
+    });
+
+    if (response.status === 302) {
+      const _redirectUri = response.headers.get('Location');
+      console.log(JSON.stringify({ _redirectUri, 'response.url': response.headers }));
+      // const data = await response.json();
+      // console.log(JSON.stringify({ data }))
+      const urlSearchParams = new URLSearchParams(_redirectUri.split('?')[1]);
+      const authorizationCode = urlSearchParams.get('code');
+  
+      return { code: authorizationCode, redirectUri: _redirectUri.split('?')[0] };
+    } else {
+      if (!response.ok) {
+        const error = await response.json();
+        console.log(JSON.stringify({ error }))
+        throw new Error(error.message);
+      }
+
+      return {}
+    }
+  }
+
+  async getAuthorize(token, scope, state, clientId, redirectUri) {
     const url = `${this.config.authorizationEndpoint}`;
 
     const queryParams = new URLSearchParams();
@@ -79,14 +127,15 @@ class OAuth2Client {
     queryParams.append('client_id', clientId);
     queryParams.append('redirect_uri', redirectUri);
     queryParams.append('scope', scope);
-    queryParams.append('state', state);
+    // queryParams.append('state', state);
   
     console.log(`${url}?${queryParams.toString()}}`)
-    const response = await fetch(`${url}?${queryParams.toString()}}`, {
+    const response = await fetch(`${url}?${queryParams.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${encodeCredentials(process.env.OAUTH_API_CLIENT_ID, process.env.OAUTH_API_CLIENT_SECRET)}`,
+        'Authorization': `Bearer ${token}`
+        // 'Authorization': `Basic ${encodeCredentials(process.env.OAUTH_API_CLIENT_ID, process.env.OAUTH_API_CLIENT_SECRET)}`,
       },
       // body: body.toString(),
     });
