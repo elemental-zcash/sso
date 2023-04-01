@@ -31,11 +31,12 @@ def user_id():
     print(current_token)
     return current_token
 
-@api.route('/users/<int:id>', methods=['GET'])
+@api.route('/users/<string:id>', methods=['GET'])
 # @token_auth.login_required
-@require_oauth([''])
+@response(user_schema)
+@require_oauth()
 def get_user(id):
-    return jsonify(User.query.get_or_404(id).to_dict())
+    return User.query.filter_by(uuid=id).first() or abort(404)
 
 
 @api.route('/users', methods=['GET'])
