@@ -128,8 +128,7 @@ class OAuth2Client {
     queryParams.append('redirect_uri', redirectUri);
     queryParams.append('scope', scope);
     // queryParams.append('state', state);
-  
-    console.log(`${url}?${queryParams.toString()}}`)
+    // console.log(`${url}?${queryParams.toString()}`)
     const response = await fetch(`${url}?${queryParams.toString()}`, {
       method: 'GET',
       headers: {
@@ -141,9 +140,11 @@ class OAuth2Client {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.log(JSON.stringify(error))
-      throw new Error(error.message);
+      try {
+        const error = await response.json();
+        console.log(JSON.stringify(error))
+      } catch(err) {}
+      throw new Error('Authorize verify failed');
     }
 
     return await response.json();
@@ -168,8 +169,10 @@ class OAuth2Client {
     });
 
     if (!response.ok) {
-      const data = await response.json();
-      console.log(JSON.stringify({ data }));
+      try {
+        const data = await response.json();
+        console.log(JSON.stringify({ error: data }));
+      } catch(err) {}
       throw new Error('Authorization code request failed');
     }
 

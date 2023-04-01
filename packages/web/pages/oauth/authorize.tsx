@@ -4,7 +4,14 @@ import { useRouter } from 'next/router';
 import { Box, Text } from 'elemental-react';
 import Head from 'next/head';
 import Section from '../../components/Section';
+import { getErrorCode } from '../../graphql/utils';
 
+interface CheckAuthorizeError {
+  __typename: 'CheckAuthorizeError',
+  message: string,
+  code: string,
+};
+  
 
 const AUTHORIZE_MUTATION = gql`
   mutation GetAuthorizationCode($input: AuthCodeGrantInput!, $confirm: Boolean!) {
@@ -37,8 +44,10 @@ function AuthorizePage({ user }) {
   const [username, setUsername] = React.useState('');
   const [authorize, { loading, error }] = useMutation(AUTHORIZE_MUTATION);
   const { data, loading: checkLoading, error: checkError } = useQuery(CHECK_AUTHORIZATION_MUTATION, {
-    variables: { input: { clientId: client_id, redirectUri: redirect_uri, scope }}
+    variables: { input: { clientId: client_id, redirectUri: redirect_uri, scope }},
   });
+
+  const { code: errorCode, message: errorMessage }: { code?: string, message?: string } = getErrorCode(error, data?.checkAuthorizationGrant as CheckAuthorizeError);
   // const { client, request } = data || ;
 
 //   const grant = '123';
@@ -48,13 +57,19 @@ function AuthorizePage({ user }) {
       variables: { input: { clientId: client_id, redirectUri: redirect_uri, scope }, confirm },
       onCompleted: (data) => {
         // Perform your callback action here using the data returned by the mutation
-        console.log('Authorization code:', data.authorize.code);
-        console.log('Redirect URI:', data.authorize.redirectUri);
+        // console.log('Authorization code:', data.authorize.code);
+        // console.log('Redirect URI:', data.authorize.redirectUri);
         // window.location.href = data.authorize.redirectUri;
-        router.replace(data.authorize.redirectUri)
+        router.replace(`${data.authorize.redirectUri}?code=${data.authorize.code}`)
       },
     });
   }
+  
+  useEffect(() => {
+    if (checkError?.message?.toLowerCase().includes('unauthorized')) {
+      router.push(`/auth/login?callback_uri=${redirect_uri}&scope=${scope}&client_id=${client_id}`)
+    }
+  }, [checkError]);
 
   // useEffect(() => {
   //   checkAuthorizationGrant();
@@ -74,6 +89,11 @@ function AuthorizePage({ user }) {
             <Text>Loading...</Text>
           ) : (
             <>
+              {(error || errorCode || errorMessage) && (
+                <Box>
+                    <Text mb={20} color="error">{`Error: ${error?.message || errorMessage || errorCode}. Please try again.`}</Text>
+                </Box>
+                )}
               <p>
                 The application <strong>{data?.checkAuthorizationGrant?.client?.clientName}</strong> is requesting:
                 <strong>{` ${data?.checkAuthorizationGrant?.request?.scope}`}</strong>
@@ -102,7 +122,7 @@ function AuthorizePage({ user }) {
                 {loading ? 'Submitting...' : 'Submit'}
                 </button>
               </form>
-              {error && <p>An error occurred while submitting the form. Please try again.</p>}
+              {/* {error && <p>An error occurred while submitting the form. Please try again.</p>} */}
             </>
           )}
         </Box>

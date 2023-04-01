@@ -134,6 +134,14 @@ const LoginForm = () => {
         return;
       }
       const { user } = result.login;
+
+      // if (router.query.callback_uri && ['http://127.0.0.1:3000'].includes(router.query.callback_uri as string)) {
+      if (router.query.callback_uri) { // FIXME: /oauth/authorize should be verifying the redirect_uri, so don't think a check here is needed
+        const { scope, client_id, callback_uri } = router.query;
+        router.push(`/oauth/authorize?response_type=code&client_id=${client_id}&scope=${scope}&redirect_uri=${callback_uri}`)
+        return;
+      }
+
       if (!user.isVerifiedEmail) {
         setLoginStage(LoginStage.EMAIL_VERIFICATION);
       } else {
@@ -170,10 +178,10 @@ const LoginForm = () => {
           const args: { variables: any } = {
             variables: { input: { password: values.password } },
           }
-          if (values.email) {
+          if (signupType === SignupType.EMAIL && values.email) {
             args.variables.input.email = values.email;
           }
-          if (values.username) {
+          if (signupType === SignupType.ACCOUNT_ID && values.username) {
             args.variables.input.username = values.username;
           }
           const { data: mutationData, errors } = await login(args);

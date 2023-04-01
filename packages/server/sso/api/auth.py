@@ -87,28 +87,8 @@ def login():
 
             return jsonify({ 'code': code })
         else:
-            return 'Invalid credentials';
-        #     return user
-
-        # # Verify username and password
-
-        # user = users.get(username)
-        # if user and user['password'] == password:
-        #     # Generate a random authorization code
-        #     code = generate_token(48)
-
-
-        #     authorization.createa
-        #     # Store the code in a database or cache
-        #     # Redirect to the authorization endpoint with the code and state
-        #     return redirect(authorization.create_authorization_response(
-        #         code=code,
-        #         state=request.args.get('state')
-        #     ))
-        # else:
-        #     # Incorrect username or password
-        #     return 'Invalid credentials'
-    return None
+            return jsonify({'error': 'User or password incorrect.'}), 401
+    return jsonify({'error': 'User or password incorrect.'}), 401
 
 @api.route('/auth/email/confirm/<token>')
 @require_oauth()
