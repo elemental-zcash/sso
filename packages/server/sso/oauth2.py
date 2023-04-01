@@ -10,11 +10,14 @@ from authlib.integrations.sqla_oauth2 import (
 )
 from authlib.oauth2.rfc6749 import grants
 from authlib.oauth2.rfc7636 import CodeChallenge
+from authlib.oauth2.rfc7662 import IntrospectionEndpoint
+import re
 
 from db import db
 from models.user import User
 from models.oauth import OAuth2Client, OAuth2AuthorizationCode, OAuth2Token
 
+login_id_pattern = "^[A-Z1-9]{16}$"
 
 class AuthorizationCodeGrant(grants.AuthorizationCodeGrant):
     TOKEN_ENDPOINT_AUTH_METHODS = [
@@ -54,14 +57,18 @@ class AuthorizationCodeGrant(grants.AuthorizationCodeGrant):
 
 
 class PasswordGrant(grants.ResourceOwnerPasswordCredentialsGrant):
-    TOKEN_ENDPOINT_AUTH_METHODS = [
-        'client_secret_basic',
-        'client_secret_post',
-        'none',
-    ]
+    # TOKEN_ENDPOINT_AUTH_METHODS = [
+    #     'client_secret_basic',
+    #     'client_secret_post',
+    #     # 'none',
+    # ]
 
     def authenticate_user(self, username, password):
-        user = User.query.filter_by(unverified_email=username).first()
+        user = None
+        if (re.match(login_id_pattern, username)):
+            user = User.query.filter_by(login_id=username).first()
+        else:
+            user = User.query.filter_by(unverified_email=username).first()
         if user is not None and user.verify_password(password):
             return user
 
@@ -79,6 +86,47 @@ class RefreshTokenGrant(grants.RefreshTokenGrant):
         credential.revoked = True
         db.session.add(credential)
         db.session.commit()
+
+def get_token_username(token):
+    return token.user.login_id
+
+def get_token_user_sub(token):
+    return token.user.uuid
+
+class MyIntrospectionEndpoint(IntrospectionEndpoint):
+    def query_token(self, token, token_type_hint):
+        if token_type_hint == 'access_token':
+            tok = OAuth2Token.query.filter_by(access_token=token).first()
+        elif token_type_hint == 'refresh_token':
+            tok = OAuth2Token.query.filter_by(refresh_token=token).first()
+        else:
+            # without token_type_hint
+            tok = OAuth2Token.query.filter_by(access_token=token).first()
+            if not tok:
+                tok = OAuth2Token.query.filter_by(refresh_token=token).first()
+        return tok
+
+    def introspect_token(self, token):
+        # print({ 'username': get_token_username(token), 'sub': get_token_user_sub(token), 'expires_at': token.expires_at })
+        return {
+            'active': True,
+            'client_id': token.client_id,
+            'token_type': token.token_type,
+            'username': get_token_username(token),
+            'scope': token.get_scope(),
+            'sub': get_token_user_sub(token),
+            'aud': token.client_id,
+            'iss': 'https://sso.elementalzcash.com/',
+            'exp': token.expires_at(),
+            'iat': token.issued_at,
+        }
+
+    def check_permission(self, token, client, request):
+        # for example, we only allow internal client to access introspection endpoint
+        # return client.client_type == 'internal'
+        # return True
+        # print({ 'client_name': client.client_metadata.get('client_name') })
+        return client.client_metadata.get('client_name') == 'sso-system'
 
 
 query_client = create_query_client_func(db.session, OAuth2Client)
@@ -103,6 +151,8 @@ def config_oauth(app):
     # support revocation
     revocation_cls = create_revocation_endpoint(db.session, OAuth2Token)
     authorization.register_endpoint(revocation_cls)
+
+    authorization.register_endpoint(MyIntrospectionEndpoint)
 
     # protect resource
     bearer_cls = create_bearer_token_validator(db.session, OAuth2Token)

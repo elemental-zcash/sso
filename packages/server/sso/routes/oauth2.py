@@ -9,7 +9,7 @@ import json
 from db import db
 
 from models import User, OAuth2Client
-from oauth2 import authorization, require_oauth
+from oauth2 import authorization, require_oauth, MyIntrospectionEndpoint
 
 bp = Blueprint('oauth', __name__)
 
@@ -135,17 +135,25 @@ def generate_client(data, token_endpoint_auth_method='none'):
 
 
 @bp.route('/oauth/authorize', methods=['GET', 'POST'])
+@require_oauth()
+# @require_oauth('authorize')
 def authorize():
-    user = current_user()
+    # user = current_user()
+    user = current_token.user
     # if user log status is not true (Auth server), then to log it in
     if not user:
         return redirect(url_for('home.home', next=request.url))
     if request.method == 'GET':
         try:
-            grant = authorization.get_consent_grant(end_user=user)
+            end_user=User.query.get(int(user.id))
+            grant = authorization.get_consent_grant(end_user=end_user)
         except OAuth2Error as error:
             return error.error
-        return render_template('authorize.html', user=user, grant=grant)
+        return jsonify({'user': user.serialize(), 'grant': {\
+            'client': { 'client_name': grant.client.client_name },\
+            'request': {'scope': grant.request.scope }\
+        }})
+        # return render_template('authorize.html', user=user, grant=grant)
     if not user and 'username' in request.form:
         username = request.form.get('username')
         user = User.query.filter_by(username=username).first()
@@ -158,12 +166,17 @@ def authorize():
 
 @bp.route('/oauth/token', methods=['POST'])
 def issue_token():
+    # print({'grant_type_refresh_token': client.check_grant_type('refresh_token')})
     return authorization.create_token_response()
 
 
 @bp.route('/oauth/revoke', methods=['POST'])
 def revoke_token():
     return authorization.create_endpoint_response('revocation')
+
+@bp.route('/oauth/introspect', methods=['POST'])
+def introspect_token():
+    return authorization.create_endpoint_response(MyIntrospectionEndpoint.ENDPOINT_NAME)
 
 
 @bp.route('/login', methods=['POST'])
