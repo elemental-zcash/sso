@@ -111,6 +111,9 @@ class Role(db.Model):
 def generate_nanoid():
     return str(nanoid())
 
+def generate_login_id():
+    return str(nanoid('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 16))
+
 class User(Updateable, db.Model):
     __tablename__ = 'users'
 
@@ -131,6 +134,7 @@ class User(Updateable, db.Model):
             back_populates='user')
 
     uuid = db.Column(db.String(255), unique=True, index=True, default=generate_nanoid)
+    login_id = db.Column(db.String(255), unique=True, index=True, default=generate_login_id) # Temporary login for staging, bypassing email/zaddr verification
     email_confirmed = db.Column(db.Boolean, default=False)
     is_confirmed = db.Column(db.Boolean, default=False)
     zcashaddress_confirmed = db.Column(db.Boolean, default=False)
@@ -270,16 +274,16 @@ class User(Updateable, db.Model):
             'id': self.id,
             'username': self.username,
             # 'last_seen': self.last_seen.isoformat() + 'Z',
-            'about_me': self.about_me,
-            'post_count': self.posts.count(),
-            'follower_count': self.followers.count(),
-            'followed_count': self.followed.count(),
-            '_links': {
-                # 'self': url_for('api.get_user', id=self.id),
-                # 'followers': url_for('api.get_followers', id=self.id),
-                # 'followed': url_for('api.get_followed', id=self.id),
-                'avatar': self.avatar(128)
-            }
+            # 'about_me': self.about_me,
+            # 'post_count': self.posts.count(),
+            # 'follower_count': self.followers.count(),
+            # 'followed_count': self.followed.count(),
+            # '_links': {
+            #     # 'self': url_for('api.get_user', id=self.id),
+            #     # 'followers': url_for('api.get_followers', id=self.id),
+            #     # 'followed': url_for('api.get_followed', id=self.id),
+            #     'avatar': self.avatar(128)
+            # }
         }
         if include_email:
             data['email'] = self.email
