@@ -9,6 +9,7 @@ class Config(object):
   DISABLE_AUTH = False
   USE_CORS = False
   SECRET_KEY = os.environ['SECRET_KEY']
+  OAUTH2_REFRESH_TOKEN_GENERATOR = True
   CLIENT_SECRETS = {
     'sso-system': os.environ['CLIENT_SECRET_SSO_SYSTEM']
   }
