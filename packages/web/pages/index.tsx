@@ -33,7 +33,7 @@ export default function Home() {
         <Box mt={20} alignItems="center">
           {data?.viewer?.__typename === 'Viewer' && data?.viewer?.userId ? (
             <Box>
-              {data.viewer.user.isVerifiedEmail ? (
+              {data.viewer.user.username ? (
                 <>
                   <Text center mb={16}>You are logged in.</Text>
                   <Box mb={20}>

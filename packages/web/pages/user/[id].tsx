@@ -306,8 +306,17 @@ export default function User() {
                     </Box>
                   </a>
                 ))}
+                {userData?.zcashaddress && (
+                  <Box>
+                    <Button onPress={() => setInvoiceStage(InvoiceStage.CHOOSE_AMOUNT)}>DONATE WITH ZCASH</Button>
+                  </Box>
+                )}
                 <Box>
-                  <Button onPress={() => setInvoiceStage(InvoiceStage.CHOOSE_AMOUNT)}>DONATE WITH ZCASH</Button>
+                  <Link href="/">
+                    <TextLink m={0} mb={20} color="blue">
+                      {'< Back to home'}
+                    </TextLink>
+                  </Link>
                 </Box>
               {/* <Text center fontSize={20}>{userData.name}</Text> */}
             </Box>

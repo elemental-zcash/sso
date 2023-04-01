@@ -11,7 +11,10 @@ const LOGIN = gql`
           unverifiedEmail
           isVerifiedEmail
         }
-        code
+        accessToken
+        refreshToken
+        expiresIn
+        tokenType
       }
       ...on LoginError {
         message
