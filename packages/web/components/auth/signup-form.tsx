@@ -13,6 +13,7 @@ import { getErrorCode } from '../../graphql/utils';
 import SEND_VERIFICATION_EMAIL from '../../graphql/mutations/send-verification-email';
 // import { useQuery } from 'react-query';
 import { config } from '../../config';
+import { SignupType } from './constants';
 
 const FormTextInput = ({ label, value, onChange, ...props }) => (
   <TextInput
@@ -77,10 +78,7 @@ interface SignupSuccess {
 interface SignupError { __typename: 'SignupError', message: string, code: string };
 
 
-enum SignupType {
-  EMAIL = 'EMAIL',
-  ZCASH = 'ZCASH',
-};
+
 
 const getToken = async (code) => {
   const res = await fetch(`${config.OAUTH_URL}/token`, {

@@ -15,6 +15,7 @@ import VerifyEmailLoginBox from './verify-email-login-box';
 import SEND_VERIFICATION_EMAIL from '../../graphql/mutations/send-verification-email';
 import { useRouter } from 'next/router';
 import { config } from '../../config';
+import { SignupType } from './constants';
 
 enum LoginStage {
   LOGIN = 'LOGIN',
@@ -28,7 +29,11 @@ interface LoginSuccess {
     id: string,
     isVerifiedEmail: boolean,
   },
-  code: string,
+  // code: string,
+  accessToken: string,
+  refreshToken: string,
+  expiresIn: String,
+  tokenType: 'Bearer',
 };
 interface LoginError {
   __typename: 'LoginError',
@@ -42,12 +47,49 @@ enum LoginResponse {
 }
 
 const LoginSchema = Yup.object().shape({
-  email: Yup.string().email('Invalid email').required('Required'),
+  username: Yup
+    .string().min(16).max(16)
+    .when(['email'], {
+      is: (email) => Boolean(!email),
+      then: Yup.string().required("Required")
+    }),
+  // zcashaddress: Yup
+  //   .string().min(16).max(16)
+  //   .when(['email', 'username'], {
+  //     is: (email, username) => Boolean(!username && !email),
+  //     then: Yup.string().required("Required")
+  //   }),
+  zcashaddress: Yup
+    .string().min(16),
+  email: Yup
+    .string()
+    .email('Invalid email')
+    .when(['username'], {
+      is: (username) => Boolean(!username),
+      then: Yup.string().required("Required")
+    }),
+    // .required('Required'),
   password: Yup.string()
     .min(8, 'Too short!')
     .max(999, 'Too long!')
     .required('Required'),
-});
+}, [['username', 'email']]);
+
+const FormTextInput = ({ label, value, onChange, ...props }) => (
+  <TextInput
+    placeholder={label}
+    // @ts-ignore
+    value={value}
+    onChange={onChange}
+    pb={0}
+    px={3}
+    borderWidth={1}
+    borderRadius={4}
+    height={40}
+    borderColor="#e2e2f2"
+    {...props}
+  />
+);
 
 
 interface LoginInput {
@@ -56,6 +98,14 @@ interface LoginInput {
 }
 
 const TextButton = _TextButton as typeof Button;
+
+const saveToken = (token) => {
+  const { accessToken, refreshToken, expiresIn, tokenType } = token;
+  localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem('refreshToken', refreshToken);
+  localStorage.setItem('expiresIn', expiresIn);
+  localStorage.setItem('tokenType', tokenType);
+}
 
 const getToken = async (code) => {
   const res = await fetch(`${config.OAUTH_URL}/token`, {
@@ -71,20 +121,19 @@ const getToken = async (code) => {
   });
   const { access_token, refresh_token, expires_in, token_type } = await res.json();
 
-  localStorage.setItem('accessToken', access_token);
-  localStorage.setItem('refreshToken', refresh_token);
-  localStorage.setItem('expiresIn', expires_in);
-  localStorage.setItem('tokenType', token_type);
+  saveToken({ accessToken: access_token, refreshToken: refresh_token, expiresIn: expires_in, tokenType: token_type });
 }
 
 const LoginForm = () => {
   const router = useRouter();
+  const [loginStage, setLoginStage] = useState(LoginStage.LOGIN);
+  const [signupType, setSignupType] = useState(SignupType.ACCOUNT_ID);
   const [login, { data, loading, error, }] = useMutation<{ login: LoginSuccess | LoginError }, { input: LoginInput }>(LOGIN, {
     onCompleted: (result) => {
       if (result.login.__typename === LoginResponse.LoginError) {
         return;
       }
-      const { user, code } = result.login;
+      const { user } = result.login;
       if (!user.isVerifiedEmail) {
         setLoginStage(LoginStage.EMAIL_VERIFICATION);
       } else {
@@ -96,7 +145,6 @@ const LoginForm = () => {
   const [sendVerificationEmail, { data: verificationData, loading: verificationLoading, error: verificationError }] = useMutation<{ sendVerificationEmail: boolean }, { address: string }>(SEND_VERIFICATION_EMAIL);
 
   const { code: errorCode, message: errorMessage }: { code?: string, message?: string } = getErrorCode(error, data?.login as LoginError);
-  const [loginStage, setLoginStage] = useState(LoginStage.LOGIN);
   
   useEffect(() => {
     
@@ -111,7 +159,7 @@ const LoginForm = () => {
   return (
     <Box borderWidth={1} borderColor="#e2e2f2" borderRadius={4} p={40} flex={1}>
       <Formik
-        initialValues={{ email: '', password: '' }}
+        initialValues={{ email: '', username: '', password: '', zcashaddress: '' }}
         // validate={(values) => {
         //   const errors = {};
 
@@ -119,15 +167,26 @@ const LoginForm = () => {
         // }}
         validationSchema={LoginSchema}
         onSubmit={async (values) => {
-          const { data: mutationData, errors } = await login({
-            variables: { input: { email: values.email, password: values.password } },
-          });
+          const args: { variables: any } = {
+            variables: { input: { password: values.password } },
+          }
+          if (values.email) {
+            args.variables.input.email = values.email;
+          }
+          if (values.username) {
+            args.variables.input.username = values.username;
+          }
+          const { data: mutationData, errors } = await login(args);
           if (!errors && mutationData?.login?.__typename === 'LoginSuccess') {
             const loginUser = mutationData.login.user;
-            const loginCode = mutationData.login.code;
+            const { accessToken, refreshToken, expiresIn, tokenType } = mutationData.login; 
+            // const loginCode = mutationData.login.code;
 
-            if (loginCode) {
-              await getToken(loginCode);
+            // if (loginCode) {
+            //   await getToken(loginCode);
+            // }
+            if (accessToken) {
+              await saveToken({ accessToken, refreshToken, expiresIn, tokenType });
             }
           } 
         }}
@@ -143,32 +202,70 @@ const LoginForm = () => {
                       <Text mb={20} color="error">{`Error: ${error?.message || errorMessage || errorCode}`}</Text>
                     </Box>
                   )}
-                  <Box>
-                    <InputField
-                      width="100%"
-                      label="Email"
-                      error={touched.email && errors.email}
-                      value={values.email}
-                    >
-                      {({ label, value }) =>
-                        <TextInput
-                          placeholder={label}
-                          // @ts-ignore
-                          value={value}
-                          onChange={handleChange('email')}
-                          // onChangeText={(text) => {
-                          //   setFieldValue('username', text);
-                          // }}
-                          pb={0}
-                          px={3}
-                          borderWidth={1}
-                          borderRadius={4}
-                          height={40}
-                          borderColor="#e2e2f2"
-                        />
-                      }
-                    </InputField>
-                  </Box>
+                  {signupType === SignupType.ACCOUNT_ID && (
+                    <Box>
+                      <InputField
+                        width="100%"
+                        label="Account ID"
+                        error={touched.username && errors.username}
+                        value={values.username}
+                      >
+                        {({ value, label }) =>
+                          <FormTextInput
+                            label={label}
+                            value={value}
+                            onChange={handleChange('username')}
+                          />
+                        }
+                      </InputField>
+                    </Box>
+                  )}
+                  {signupType === SignupType.ZCASH && (
+                    <Box>
+                      <InputField
+                        width="100%"
+                        label="Zcash Address (keep viewing and private key private)"
+                        error={touched.zcashaddress && errors.zcashaddress}
+                        value={values.zcashaddress}
+                      >
+                        {({ value }) =>
+                          <FormTextInput
+                            label="Zcash Address"
+                            value={value}
+                            onChange={handleChange('zcashaddress')}
+                          />
+                        }
+                      </InputField>
+                    </Box>
+                  )}
+                  {signupType === SignupType.EMAIL && (
+                    <Box>
+                      <InputField
+                        width="100%"
+                        label="Email"
+                        error={touched.email && errors.email}
+                        value={values.email}
+                      >
+                        {({ label, value }) =>
+                          <TextInput
+                            placeholder={label}
+                            // @ts-ignore
+                            value={value}
+                            onChange={handleChange('email')}
+                            // onChangeText={(text) => {
+                            //   setFieldValue('username', text);
+                            // }}
+                            pb={0}
+                            px={3}
+                            borderWidth={1}
+                            borderRadius={4}
+                            height={40}
+                            borderColor="#e2e2f2"
+                          />
+                        }
+                      </InputField>
+                    </Box>
+                  )}
                   <Box>
                     <PasswordField
                       error={touched.password && errors.password}
@@ -185,6 +282,11 @@ const LoginForm = () => {
                     </Link>
                     <Button onPress={handleSubmit} m={0} minWidth={128}>SIGN IN</Button>
                   </Row>
+                  <Box py={20}>
+                    {signupType !== SignupType.EMAIL && <Button mb={20} outlined color="primary" onPress={() => { setSignupType(SignupType.EMAIL) }} m={0}>SIGN IN WITH EMAIL</Button>}
+                    {signupType !== SignupType.ACCOUNT_ID && <Button mb={20} outlined color="primary" onPress={() => { setSignupType(SignupType.ACCOUNT_ID) }} m={0}>SIGN IN WITH ACCOUNT ID</Button>}
+                    {signupType !== SignupType.ZCASH && <Button mb={20} outlined color="primary" onPress={() => { setSignupType(SignupType.ZCASH) }} m={0}>SIGN IN WITH ZCASH</Button>}
+                  </Box>
                 </>
               ),
               [LoginStage.EMAIL_VERIFICATION]: (
