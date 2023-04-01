@@ -24,6 +24,8 @@ pytest = "*"
 coverage = "*"
 pylint = "*"
 pytest-cov = "*"
+python-dotenv = "*"
+gunicorn = "*"
 
 [dev-packages]
 
