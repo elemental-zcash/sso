@@ -2,8 +2,10 @@ import OAuth2Client from '../data/api/oauth2';
 
 
 export const oAuthClient = new OAuth2Client({
-  clientId: process.env.OAUTH_CLIENT_ID,
-  clientSecret: process.env.OAUTH_CLIENT_SECRET,
+  systemClientId: process.env.OAUTH_SYSTEM_CLIENT_ID,
+  systemClientSecret: process.env.OAUTH_SYSTEM_CLIENT_SECRET,
+  apiClientId: process.env.OAUTH_API_CLIENT_ID,
+  apiClientSecret: process.env.OAUTH_API_CLIENT_SECRET,
   introspectionEndpoint: `${process.env.FLASK_API_URL}/oauth/introspect`,
   authorizationEndpoint: `${process.env.FLASK_API_URL}/oauth/authorize`,
   tokenEndpoint: `${process.env.FLASK_API_URL}/oauth/token`,

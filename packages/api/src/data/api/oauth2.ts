@@ -6,7 +6,16 @@ function encodeCredentials(clientId, clientSecret) {
   return buffer.toString('base64');
 }
 
-type Config = { introspectionEndpoint: string, clientId: string, clientSecret: string, tokenEndpoint: string, authorizationEndpoint: string, loginEndpoint: string };
+type Config = {
+  introspectionEndpoint: string,
+  systemClientId: string,
+  systemClientSecret: string,
+  apiClientId: string,
+  apiClientSecret: string,
+  tokenEndpoint: string,
+  authorizationEndpoint: string,
+  loginEndpoint: string
+};
 
 class OAuth2Client {
   config: Config
@@ -24,13 +33,12 @@ class OAuth2Client {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        Authorization: `Basic ${encodeCredentials(this.config.clientId, this.config.clientSecret)}`,
+        Authorization: `Basic ${encodeCredentials(this.config.systemClientId, this.config.systemClientSecret)}`,
       },
       body,
     });
 
     if (!response.ok) {
-      console.log({ response });
       throw new Error('Introspection request failed');
     }
 
@@ -50,14 +58,14 @@ class OAuth2Client {
     const body = new URLSearchParams();
     body.append('code', code);
     body.append('grant_type', 'authorization_code');
-    body.append('client_id', this.config.clientId);
+    body.append('client_id', this.config.systemClientId);
     body.append('redirect_uri', redirectUri);
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${encodeCredentials(process.env.OAUTH_API_CLIENT_ID, process.env.OAUTH_API_CLIENT_SECRET)}`,
+        'Authorization': `Basic ${encodeCredentials(this.config.apiClientId, this.config.apiClientSecret)}`,
       },
       body: body.toString(),
     });
@@ -163,7 +171,7 @@ class OAuth2Client {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        Authorization: `Basic ${encodeCredentials(process.env.OAUTH_API_CLIENT_ID, process.env.OAUTH_API_CLIENT_SECRET)}`,
+        Authorization: `Basic ${encodeCredentials(this.config.apiClientId, this.config.apiClientSecret)}`,
       },
       body,
     });
