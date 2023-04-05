@@ -1,15 +1,5 @@
 import fetch from 'node-fetch';
 
-// async function client(endpoint, method = 'GET', customConfig?) {
-//   const config = {
-//     method,
-//     ...customConfig,
-//   }
-
-//   const response = await fetch(`${process.env.FLASK_API_URL}/${endpoint}`, config)
-//   return await response.json();
-// }
-
 class APIWrapper {
   baseUrl: string;
   token: string;
@@ -25,7 +15,6 @@ class APIWrapper {
     const response = await fetch(`${this.baseUrl}/api/${resource}/${id}`, {
       headers: { ...(this.token && { 'Authorization': `Bearer ${this.token}` }) }
     });
-    console.log({ headers: { ...(this.token && { 'Authorization': `Bearer ${this.token}` }) } })
     if (!response.ok) {
       throw new Error(`Failed to get ${resource} with id ${id}: ${response.statusText}`);
     }
