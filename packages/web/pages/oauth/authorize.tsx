@@ -5,6 +5,7 @@ import { Box, Text } from 'elemental-react';
 import Head from 'next/head';
 import Section from '../../components/Section';
 import { getErrorCode } from '../../graphql/utils';
+import { Button } from '@elemental-zcash/components';
 
 interface CheckAuthorizeError {
   __typename: 'CheckAuthorizeError',
@@ -36,25 +37,29 @@ const CHECK_AUTHORIZATION_MUTATION = gql`
   }
 `;
 
-function AuthorizePage({ user }) {
+function AuthorizePage({ ...props }) {
   const router = useRouter();
   const { client_id, redirect_uri, scope, state } = router.query;
 
   const [confirm, setConfirm] = React.useState(false);
-  const [username, setUsername] = React.useState('');
   const [authorize, { loading, error }] = useMutation(AUTHORIZE_MUTATION);
   const { data, loading: checkLoading, error: checkError } = useQuery(CHECK_AUTHORIZATION_MUTATION, {
     variables: { input: { clientId: client_id, redirectUri: redirect_uri, scope }},
   });
 
   const { code: errorCode, message: errorMessage }: { code?: string, message?: string } = getErrorCode(error, data?.checkAuthorizationGrant as CheckAuthorizeError);
+
+  const client = data?.checkAuthorizationGrant?.client;
+  const user = data?.checkAuthorizationGrant?.user;
+  const grantRequest = data?.checkAuthorizationGrant?.request;
   // const { client, request } = data || ;
 
-//   const grant = '123';
-  function handleSubmit(event) {
-    event.preventDefault();
+  function handleSubmit(event?) {
+    if (event?.preventDefault) {
+      event.preventDefault();
+    }
     authorize({
-      variables: { input: { clientId: client_id, redirectUri: redirect_uri, scope }, confirm },
+      variables: { input: { clientId: client_id, redirectUri: redirect_uri, scope }, confirm: true },
       onCompleted: (data) => {
         // Perform your callback action here using the data returned by the mutation
         // console.log('Authorization code:', data.authorize.code);
@@ -84,25 +89,22 @@ function AuthorizePage({ user }) {
 
       <Section width="100%" maxWidth={640}>
         {/* <RegisterForm /> */}
-        <Box mt={20} alignItems="center">
+        <Box borderWidth={1} borderColor="#e2e2f2" borderRadius={4} p={40} flex={1}>
           {checkLoading ? (
             <Text>Loading...</Text>
           ) : (
             <>
               {(error || errorCode || errorMessage) && (
                 <Box>
-                    <Text mb={20} color="error">{`Error: ${error?.message || errorMessage || errorCode}. Please try again.`}</Text>
+                  <Text mb={20} color="error">{`Error: ${error?.message || errorMessage || errorCode}. Please try again.`}</Text>
                 </Box>
-                )}
-              <p>
-                The application <strong>{data?.checkAuthorizationGrant?.client?.clientName}</strong> is requesting:
-                <strong>{` ${data?.checkAuthorizationGrant?.request?.scope}`}</strong>
-              </p>
-              <p>
-                from You - a.k.a. <strong>{user ? user.username : 'Anonymous'}</strong>
-              </p>
-              <form onSubmit={handleSubmit}>
-                <label>
+              )}
+              <Text fontFamily="IBM Plex Sans" fontSize={30} lineHeight={36} mb={20} bold>Sign-in with <strong>Elemental Zcash SSO</strong></Text>
+              <Text fontFamily="IBM Plex Sans" fontSize={20} lineHeight={24} mb={16}><strong>{'Elemental Pay' || client?.clientName}</strong> will get access to: <strong>{grantRequest?.scope}</strong></Text>
+
+              {user?.username && <Text fontFamily="IBM Plex Sans">You are signed in as {user.username}</Text>}
+              {/* <form onSubmit={handleSubmit}> */}
+                {/* <label>
                   <input
                     type="checkbox"
                     checked={confirm}
@@ -110,18 +112,23 @@ function AuthorizePage({ user }) {
                     style={{ appearance: 'auto' }}
                   />
                   <span>Consent?</span>
-                </label>
+                </label> */}
                 {/* {!user && (
                 <div>
                     <p>You haven't logged in. Log in with:</p>
                     <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
                 </div>
                 )} */}
-                <br />
-                <button type="submit" disabled={loading}>
+                {/* <button type="submit" disabled={loading}>
                 {loading ? 'Submitting...' : 'Submit'}
-                </button>
-              </form>
+                </button> */}
+              {/* </form> */}
+              <Button
+                onPress={() => {
+                //   setConfirm(true);
+                  handleSubmit()
+                }}
+              >Authorize</Button>
               {/* {error && <p>An error occurred while submitting the form. Please try again.</p>} */}
             </>
           )}

@@ -131,6 +131,11 @@ export default function User() {
           {loading && (
             <></>
           )}
+          {error && (
+            <Box>
+              <Text>Not authorized. Please login.</Text>
+            </Box>
+          )}
           {userData?.id && (
             <Box flex={1} width="100%" p={40} borderRadius={20} bg="#f0f0f0f0" position="relative">
               {invoiceStage && userData?.zcashaddress && (

@@ -1,6 +1,6 @@
 version: '3' # Version of the Docker Compose file format
 services:
-  web:
+  sso_web:
     environment:
       - VIRTUAL_HOST=sso-staging.elementalzcash.com
       - VIRTUAL_PORT=3000

@@ -16,6 +16,7 @@ import SEND_VERIFICATION_EMAIL from '../../graphql/mutations/send-verification-e
 import { useRouter } from 'next/router';
 import { config } from '../../config';
 import { SignupType } from './constants';
+import useViewer from '../../hooks/use-viewer';
 
 enum LoginStage {
   LOGIN = 'LOGIN',
@@ -124,8 +125,8 @@ const getToken = async (code) => {
   saveToken({ accessToken: access_token, refreshToken: refresh_token, expiresIn: expires_in, tokenType: token_type });
 }
 
-const LoginForm = () => {
-  const router = useRouter();
+const LoginForm = ({ router, username }) => {
+  const { loading: loadingViewer, viewer } = useViewer();
   const [loginStage, setLoginStage] = useState(LoginStage.LOGIN);
   const [signupType, setSignupType] = useState(SignupType.ACCOUNT_ID);
   const [login, { data, loading, error, }] = useMutation<{ login: LoginSuccess | LoginError }, { input: LoginInput }>(LOGIN, {
@@ -143,7 +144,9 @@ const LoginForm = () => {
       }
 
       if (!user.isVerifiedEmail) {
-        setLoginStage(LoginStage.EMAIL_VERIFICATION);
+        // setLoginStage(LoginStage.EMAIL_VERIFICATION);
+        // FIXME: Enable email verification flow
+        router.push('/');
       } else {
         router.push('/');
       }
@@ -155,8 +158,11 @@ const LoginForm = () => {
   const { code: errorCode, message: errorMessage }: { code?: string, message?: string } = getErrorCode(error, data?.login as LoginError);
   
   useEffect(() => {
+    if (!loadingViewer && viewer?.user?.id) {
+      router.push('/');
+    }
     
-  }, []);
+  }, [loadingViewer, viewer?.user?.id]);
 
   const successData = (data?.login.__typename === LoginResponse.LoginSuccess) && data.login;
   const errorData = (data?.login.__typename === LoginResponse.LoginError) && data.login;
@@ -167,7 +173,7 @@ const LoginForm = () => {
   return (
     <Box borderWidth={1} borderColor="#e2e2f2" borderRadius={4} p={40} flex={1}>
       <Formik
-        initialValues={{ email: '', username: '', password: '', zcashaddress: '' }}
+        initialValues={{ email: '', username: username || '', password: '', zcashaddress: '' }}
         // validate={(values) => {
         //   const errors = {};
 
@@ -291,9 +297,9 @@ const LoginForm = () => {
                     <Button onPress={handleSubmit} m={0} minWidth={128}>SIGN IN</Button>
                   </Row>
                   <Box py={20}>
-                    {signupType !== SignupType.EMAIL && <Button mb={20} outlined color="primary" onPress={() => { setSignupType(SignupType.EMAIL) }} m={0}>SIGN IN WITH EMAIL</Button>}
+                    {signupType !== SignupType.EMAIL && <Button disabled mb={20} outlined color="primary" onPress={/* () => { setSignupType(SignupType.EMAIL) } */undefined} m={0}>SIGN IN WITH EMAIL</Button>}
                     {signupType !== SignupType.ACCOUNT_ID && <Button mb={20} outlined color="primary" onPress={() => { setSignupType(SignupType.ACCOUNT_ID) }} m={0}>SIGN IN WITH ACCOUNT ID</Button>}
-                    {signupType !== SignupType.ZCASH && <Button mb={20} outlined color="primary" onPress={() => { setSignupType(SignupType.ZCASH) }} m={0}>SIGN IN WITH ZCASH</Button>}
+                    {signupType !== SignupType.ZCASH && <Button disabled mb={20} outlined color="primary" onPress={/* () => { setSignupType(SignupType.ZCASH) } */undefined} m={0}>SIGN IN WITH ZCASH</Button>}
                   </Box>
                 </>
               ),

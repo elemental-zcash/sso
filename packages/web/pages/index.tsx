@@ -7,19 +7,32 @@ import TextInput from '@elemental-zcash/components/lib/forms/TextInput';
 import Section from '../components/Section';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client';
 import GET_VIEWER from '../graphql/queries/viewer';
-import { Viewer, ViewerNotFoundError } from '../hooks/use-viewer';
+import useViewer, { Viewer, ViewerNotFoundError } from '../hooks/use-viewer';
 import VerifyEmailLoginBox from '../components/auth/verify-email-login-box';
 import SEND_VERIFICATION_EMAIL from '../graphql/mutations/send-verification-email';
 import { Link } from '../components/common';
 import { TextButton } from '@elemental-zcash/components/lib/buttons';
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 // import RegisterForm from '../components/register/register-form';
 
 
 export default function Home() {
-  const { loading, data, error, client } = useQuery<{ viewer: Viewer | ViewerNotFoundError }>(GET_VIEWER);
+  const router = useRouter();
+  // const { loading, data, error, client } = useQuery<{ viewer: Viewer | ViewerNotFoundError }>(GET_VIEWER);
+  const { loading, viewer: viewerRes, error } = useViewer();
   const [sendVerificationEmail, { data: verificationData, loading: verificationLoading, error: verificationError }] = useMutation<{ sendVerificationEmail: boolean }, { address: string }>(SEND_VERIFICATION_EMAIL);
   const apolloClient = useApolloClient();
 
+  const isLoggedIn = (viewerRes?.__typename === 'Viewer' && viewerRes?.userId);
+  const viewer = isLoggedIn ? (viewerRes as Viewer) : null;
+
+
+  useEffect(() => {
+    if (!loading && !isLoggedIn) {
+      router.push('/auth/login');
+    }
+  }, [loading, isLoggedIn, router]);
 
   return (
     <Box flex={1} justifyContent="center" alignItems="center" minHeight="100vh">
@@ -31,59 +44,70 @@ export default function Home() {
       <Section width="100%" maxWidth={640}>
         {/* <RegisterForm /> */}
         <Box mt={20} alignItems="center">
-          {data?.viewer?.__typename === 'Viewer' && data?.viewer?.userId ? (
+          {loading ? (
             <Box>
-              {data.viewer.user.username ? (
-                <>
-                  <Text center mb={16}>You are logged in.</Text>
-                  <Box mb={20}>
-                    <Link href={`/settings/profile`}>{/* @ts-ignore */}
-                      <TextButton m={0} color="blue">Go to Your Settings</TextButton>
-                    </Link>
-                  </Box>
-                  <Box mb={20}>
-                    <Link href={`/user/${data.viewer.user.id}`}>{/* @ts-ignore */}
-                      <TextButton m={0} color="blue">Go to Your Public Profile</TextButton>
-                    </Link>
-                  </Box>
-                  <Button onPress={() => {
-                    localStorage.clear();
-                    apolloClient.resetStore();
-                  }}>LOG OUT</Button>
-                </>
-              ) : (
-                <>
-                  <VerifyEmailLoginBox email={data.viewer.user.unverifiedEmail} onPressResend={async () => {
-                    const unverifiedEmail = (data?.viewer as Viewer)?.user?.unverifiedEmail;
-                    if (unverifiedEmail) {
-                      const { data: mutationData, errors } = await sendVerificationEmail({ variables: { address: unverifiedEmail }});
-
-                      // if (!errors && mutationData?.sendVerificationEmail) {
-                      //   router.push('/');
-                      // }
-                    }
-                  }} />
-                  <Button onPress={() => {
-                    localStorage.clear();
-                    apolloClient.resetStore();
-                  }}>LOG OUT</Button>
-                </>
-              )}
+              <Text>Loading...</Text>
             </Box>
           ) : (
-            <Box>
-              <Link href="/auth/signup">
-                <Button>SIGN UP</Button>
-              </Link>
-              <Row flex={1}>
-                <Text style={{ display: 'inline' }}>
-                  {'Already have an account? '}
-                  <Link href="/auth/login">
-                    <Text color="blue" style={{ display: 'inline' }}>Sign In</Text>
+            <>
+              {isLoggedIn ? (
+                <Box>
+                  {viewer.user.username ? (
+                    <>
+                      <Text center mb={16}>You are logged in.</Text>
+                      <Box mb={20}>
+                        <Link href={`/settings/profile`}>{/* @ts-ignore */}
+                          <TextButton m={0} color="blue">Go to Your Settings</TextButton>
+                        </Link>
+                      </Box>
+                      <Box mb={20}>
+                        <Link href={`/user/${viewer.user.id}`}>{/* @ts-ignore */}
+                          <TextButton m={0} color="blue">Go to Your Public Profile</TextButton>
+                        </Link>
+                      </Box>
+                      <Button onPress={() => {
+                        localStorage.clear();
+                        apolloClient.resetStore();
+                      }}>LOG OUT</Button>
+                    </>
+                  ) : (
+                    <>
+                      <VerifyEmailLoginBox
+                        email={viewer.user.unverifiedEmail}
+                        onPressResend={async () => {
+                          const unverifiedEmail = viewer?.user?.unverifiedEmail;
+                          if (unverifiedEmail) {
+                            const { data: mutationData, errors } = await sendVerificationEmail({ variables: { address: unverifiedEmail }});
+
+                            // if (!errors && mutationData?.sendVerificationEmail) {
+                            //   router.push('/');
+                            // }
+                          }
+                        }}
+                      />
+                      <Button onPress={() => {
+                        localStorage.clear();
+                        apolloClient.resetStore();
+                      }}>LOG OUT</Button>
+                    </>
+                  )}
+                </Box>
+              ) : (
+                <Box>
+                  <Link href="/auth/signup">
+                    <Button>SIGN UP</Button>
                   </Link>
-                </Text>
-              </Row>
-            </Box>
+                  <Row flex={1}>
+                    <Text style={{ display: 'inline' }}>
+                      {'Already have an account? '}
+                      <Link href="/auth/login">
+                        <Text color="blue" style={{ display: 'inline' }}>Sign In</Text>
+                      </Link>
+                    </Text>
+                  </Row>
+                </Box>
+              )}
+            </>
           )}
         </Box>
       </Section>
