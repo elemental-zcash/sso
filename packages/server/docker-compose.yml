@@ -5,6 +5,8 @@ services:
     ports:
       - "3535:5050"
     hostname: sso_flask_server
+    env_file:
+    - .env
     container_name: sso_flask_server
     networks:
       - elemental_net
