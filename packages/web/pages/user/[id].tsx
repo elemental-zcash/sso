@@ -131,6 +131,11 @@ export default function User() {
           {loading && (
             <></>
           )}
+          {error && (
+            <Box>
+              <Text>Not authorized. Please login.</Text>
+            </Box>
+          )}
           {userData?.id && (
             <Box flex={1} width="100%" p={40} borderRadius={20} bg="#f0f0f0f0" position="relative">
               {invoiceStage && userData?.zcashaddress && (
@@ -306,8 +311,17 @@ export default function User() {
                     </Box>
                   </a>
                 ))}
+                {userData?.zcashaddress && (
+                  <Box>
+                    <Button onPress={() => setInvoiceStage(InvoiceStage.CHOOSE_AMOUNT)}>DONATE WITH ZCASH</Button>
+                  </Box>
+                )}
                 <Box>
-                  <Button onPress={() => setInvoiceStage(InvoiceStage.CHOOSE_AMOUNT)}>DONATE WITH ZCASH</Button>
+                  <Link href="/">
+                    <TextLink m={0} mb={20} color="blue">
+                      {'< Back to home'}
+                    </TextLink>
+                  </Link>
                 </Box>
               {/* <Text center fontSize={20}>{userData.name}</Text> */}
             </Box>

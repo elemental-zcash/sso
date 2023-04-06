@@ -3,11 +3,13 @@ import { mergeTypeDefs } from '@graphql-tools/merge';
 import interfaces from './interface.types';
 import userType from './user.types';
 import utilType from './util.types';
+import oAuthType from './oauth.types';
 
 const types = [
   interfaces,
   userType,
   utilType,
+  oAuthType,
 ];
 
 // NOTE: 2nd param is optional, and defaults to false

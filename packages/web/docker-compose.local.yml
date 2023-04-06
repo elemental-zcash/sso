@@ -1,8 +1,12 @@
 version: '3' # Version of the Docker Compose file format
 services:
-  web:
+  sso_web:
     environment:
       - VIRTUAL_HOST=elemental-sso.local
       - VIRTUAL_PORT=3000
       - NODE_ENV=development
       - NEXT_PUBLIC_APP_ENV=local
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/.next

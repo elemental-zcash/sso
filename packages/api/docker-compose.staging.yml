@@ -1,0 +1,8 @@
+version: '3'
+services:
+  api:
+    environment:
+      - VIRTUAL_HOST=sso-staging-api.elementalzcash.com
+      - VIRTUAL_PORT=8081
+      - NODE_ENV=production
+      - APP_ENV=staging

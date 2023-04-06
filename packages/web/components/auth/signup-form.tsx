@@ -13,6 +13,8 @@ import { getErrorCode } from '../../graphql/utils';
 import SEND_VERIFICATION_EMAIL from '../../graphql/mutations/send-verification-email';
 // import { useQuery } from 'react-query';
 import { config } from '../../config';
+import { SignupType } from './constants';
+import { useRouter } from 'next/router';
 
 const FormTextInput = ({ label, value, onChange, ...props }) => (
   <TextInput
@@ -59,17 +61,19 @@ const SignupWithZcashSchema = makeSchema(true);
 enum SignupStage {
   SIGNUP = 'SIGNUP',
   VERIFY_EMAIL = 'VERIFY_EMAIL',
+  SUCCESS = 'SUCCESS',
 };
 
 interface SignupInput {
-  zcashaddress: string,
-  email: string,
+  zcashaddress?: string,
+  email?: string,
   password: string,
 }
 interface SignupSuccess {
   __typename: 'SignupSuccess'
   user: {
     id: string,
+    username: string,
     unverifiedEmail: string,
   },
   code: string
@@ -77,10 +81,7 @@ interface SignupSuccess {
 interface SignupError { __typename: 'SignupError', message: string, code: string };
 
 
-enum SignupType {
-  EMAIL = 'EMAIL',
-  ZCASH = 'ZCASH',
-};
+
 
 const getToken = async (code) => {
   const res = await fetch(`${config.OAUTH_URL}/token`, {
@@ -103,6 +104,7 @@ const getToken = async (code) => {
 }
 
 const RegisterForm = () => {
+  const router = useRouter();
   const [signupStage, setSignupStage] = useState(SignupStage.SIGNUP);
   const [signup, { data, loading, error }] = useMutation<{ signup: SignupSuccess | SignupError }, { input: SignupInput }>(SIGNUP);
   const [sendVerificationEmail, { data: verificationData, loading: verificationLoading, error: verificationError }] = useMutation<{ sendVerificationEmail: boolean }, { address: string }>(SEND_VERIFICATION_EMAIL);
@@ -118,24 +120,37 @@ const RegisterForm = () => {
   return (
     <Box borderWidth={1} borderColor="#e2e2f2" borderRadius={4} p={40} flex={1}>
       <Formik
-        initialValues={{ zcashaddress: '', email: '', password: '' }}
+        initialValues={{
+          ...(signupType === SignupType.ZCASH && { zcashaddress: '' }),
+          email: '',
+          password: ''
+        }}
         validationSchema={signupType === SignupType.ZCASH ? SignupWithZcashSchema : SignupSchema}
         onSubmit={async (values) => {
           try {
-            // const { } = await client.mutate({
-            //   mutation: signup,
-            // })
-            const { data, errors } = await signup({ variables: { input: { zcashaddress: values.zcashaddress, email: values.email, password: values.password } }});
+            const input: SignupInput = {
+              password: values.password,
+            };
+            if (signupType === SignupType.ZCASH) {
+              input.zcashaddress = values.zcashaddress;
+            }
+            if (signupType === SignupType.EMAIL) {
+              input.email = values.email;
+            }
+
+            const { data, errors } = await signup({ variables: { input }});
+            // console.log({ data });
             if (!data || errors) {
               return;
             }
             if (data?.signup.__typename === 'SignupSuccess') {
-              if (!data?.signup?.user?.unverifiedEmail || !data?.signup?.code) {
+              const { user } = data.signup;
+              if (!user?.username) {
                 return; // :(
               }
-              await getToken(data?.signup?.code);
+              // await getToken(data?.signup?.code);
 
-              setSignupStage(SignupStage.VERIFY_EMAIL);
+              setSignupStage(SignupStage.SUCCESS);
               const { data: verifyEmail, errors: emailErrors } = await sendVerificationEmail({ variables: { address: data.signup.user.unverifiedEmail }})
               if (!verifyEmail || emailErrors) {
                 return;
@@ -202,8 +217,8 @@ const RegisterForm = () => {
                     />
                   </Box>
                   <Button mb={16} onPress={handleSubmit} m={0} disabled={(touched.email || touched.password) && Object.keys(errors).length > 0}>SIGN UP</Button>
-                  {signupType === SignupType.EMAIL && <Button outlined color="primary" onPress={() => { setSignupType(SignupType.ZCASH) }} m={0}>SIGN UP WITH ZCASH</Button>}
-                  {signupType === SignupType.ZCASH && <Button outlined color="primary" onPress={() => { setSignupType(SignupType.EMAIL) }} m={0}>SIGN UP WITH EMAIL</Button>}
+                  {signupType !== SignupType.ZCASH && <Button disabled outlined color="primary" /*onPress={() => { setSignupType(SignupType.ZCASH) }}*/ m={0}>SIGN UP WITH ZCASH</Button>}
+                  {signupType !== SignupType.EMAIL && <Button outlined color="primary" onPress={() => { setSignupType(SignupType.EMAIL) }} m={0}>SIGN UP WITH EMAIL</Button>}
                 </Box>
               ),
               [SignupStage.VERIFY_EMAIL]: (
@@ -214,7 +229,38 @@ const RegisterForm = () => {
                     <Text bold>{values.email}</Text>
                   </Text>
                 </Box>
-              )
+              ),
+              [SignupStage.SUCCESS]: (
+                <Box justifyContent="center" alignItems="center">
+                  <Text center bold fontSize={24} mb={3}>Success!</Text>
+                  <Text center bold fontSize={20} mb={2}>Your Account ID is: {(data?.signup as SignupSuccess)?.user.username}</Text>
+                  <Text center bold fontSize={16} mb={2}>You will need it to login (email verification/login is disabled for now)</Text>
+                  <Button
+                    mb={16}
+                    onPress={() => {
+                      const routerOptions = {
+                        pathname: '/auth/login',
+                        query: {
+                          username: (data?.signup as SignupSuccess)?.user.username,
+                        } as { username: string, scope?: string, client_id?: string, callback_uri: string }
+                      };
+
+                      if (router.query.callback_uri) {
+                        const { scope, client_id, callback_uri } = router.query;
+
+                        routerOptions.query.scope = scope as string;
+                        routerOptions.query.client_id = client_id as string;
+                        routerOptions.query.callback_uri = callback_uri as string;
+                      }
+                      router.push(routerOptions);
+                    }}
+                    m={0}
+                    disabled={(touched.email || touched.password) && Object.keys(errors).length > 0}
+                  >
+                    LOGIN
+                  </Button>
+                </Box>
+              ),
             }[signupStage]}
           </>
         )}

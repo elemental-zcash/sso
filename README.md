@@ -53,6 +53,11 @@ npm run start:local # alias for the docker-compose script
 - https://www.apollographql.com/blog/backend/architecture/how-to-structure-graphql-server-code/#.w8djt4dyf
 - https://www.apollographql.com/blog/community/backend/graphql-at-facebook-by-dan-schafer/
 - 
+- https://github.com/spruceid/siwe-quickstart/blob/main/03_complete_app/backend/src/index.js
+- Sign-in With Ethereum – https://login.xyz/
+- 
+- https://nhost.io/product/auth
+- 
 - https://app.postdrop.io/ - email HTML (for React templating?)
 - 
 - VERIFYING EMAILS: https://designmodo.com/verification-emails/
@@ -64,3 +69,18 @@ npm run start:local # alias for the docker-compose script
 - https://github.com/curityio/react-haapi-demo/blob/master/src/components/HAAPIProcessor.js
 - 
 - 
+
+Docker cron - https://levelup.gitconnected.com/cron-docker-the-easiest-job-scheduler-youll-ever-create-e1753eb5ea44
+https://github.com/mcuadros/ofelia
+
+## Python Server
+
+
+
+```sh
+pip freeze > requirements.txt
+```
+
+```bash
+pip install -r requirements.txt 
+```

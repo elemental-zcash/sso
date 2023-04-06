@@ -72,13 +72,17 @@ export default `
   union SignupResponse = SignupSuccess | SignupError
 
   input LoginInput {
-    email: String!
+    email: String
+    username: String
     password: String!
   }
 
   type LoginSuccess {
     user: User!
-    code: String!
+    accessToken: String!
+    expiresIn: Date
+    tokenType: String
+    refreshToken: String
   }
   type LoginError implements Error {
     message: String!

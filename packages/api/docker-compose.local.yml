@@ -1,0 +1,16 @@
+version: '3' # Version of the Docker Compose file format
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: always
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - VIRTUAL_HOST=api.elemental-sso.local
+      - VIRTUAL_PORT=8081
+      - NODE_ENV=development
+      - APP_ENV=local

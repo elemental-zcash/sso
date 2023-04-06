@@ -10,6 +10,13 @@ module.exports = withTM({
   // },
   // pageExtensions: getBareExtensions(['web']),
   // pageExtensions: ['web', 'web.js', 'mdx', 'md', 'jsx', 'js', 'tsx', 'ts'],
+  webpackDevMiddleware: config => {
+    config.watchOptions = {
+      poll: 1000,
+      aggregateTimeout: 300,
+    }
+    return config
+  },
   webpack: (config) => ({
     ...config,
     module: {

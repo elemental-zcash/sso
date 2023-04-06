@@ -8,9 +8,12 @@ import TextInput from '@elemental-zcash/components/lib/forms/TextInput';
 import Section from '../../components/Section';
 import LoginForm from '../../components/auth/login-form';
 import { TextLink } from '../../components/common';
+import { useRouter } from 'next/router';
 
 
 export default function Signup() {
+  const router = useRouter();
+
   return (
     <Box flex={1} justifyContent="center" alignItems="center" minHeight="100vh">
       <Head>
@@ -19,7 +22,7 @@ export default function Signup() {
       </Head>
 
       <Section width="100%" maxWidth={640}>
-        <LoginForm />
+        <LoginForm key={String(router.query.username)} router={router} username={router.query.username} />
         <Box mt={20} alignItems="center">
           <Row flex={1}>
             <Text style={{ display: 'inline' }}>
