@@ -89,7 +89,7 @@ class UserSchema(ma.SQLAlchemySchema):
 
     # id = ma.auto_field(dump_only=True)
     # id = ma.String(dump_only=True, data_key="uuid")
-    id = fields.UUID(dump_only=True, attribute='uuid', data_key='id')
+    id = fields.String(dump_only=True, attribute='uuid', data_key='id')
     uuid = ma.auto_field(dump_only=True)
     url = ma.String(dump_only=True)
     joined_on = ma.auto_field(dump_only=True)
@@ -98,7 +98,7 @@ class UserSchema(ma.SQLAlchemySchema):
     #     required=True,validate=validate.Length(min=3, max=64)
     # )
     email = ma.String(
-        required=True,
+        # required=True,
         load_only=True,
         validate=[validate.Length(max=120), validate.Email()]
     )
@@ -109,7 +109,7 @@ class UserSchema(ma.SQLAlchemySchema):
         validate=[validate.Length(min=16), validate.Length(max=16)]
     )
     zcashaddress = ma.String(
-        required=True,
+        # required=True,
         load_only=True,
         validate=[validate.Length(max=255)]
     )
