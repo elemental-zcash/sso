@@ -1,16 +1,41 @@
 {
-  "clients": [{
+  "sso-api": {
     "client_name": "sso-api",
-    "token_endpoint_auth_method": "none",
+    "token_endpoint_auth_method": "client_secret_basic",
     "grants": ["authorization_code", "refresh_token", "access_token", "password"],
+    "response_types": ["code"],
     "access_token_lifetime": 5184000,
-    "authorization_code_lifetime": 300
-  }, {
+    "authorization_code_lifetime": 300,
+    "scope": "email profile",
+    "redirect_uris":[
+      "http://127.0.0.1:3000",
+      "http://localhost:3000",
+      "https://elemental-pay.local/auth/callback",
+      "https://staging.elementalpay.com/auth/callback",
+      "https://elementalpay.com/auth/callback",
+      "http://127.0.0.1:4000/auth/callback"
+    ]
+  },
+  "sso-system": {
     "client_name": "sso-system",
     "token_endpoint_auth_method": "client_secret_basic",
     "grants": ["authorization_code", "refresh_token", "client_credentials"],
     "scope": "system system_user",
     "access_token_lifetime": 5184000,
     "authorization_code_lifetime": 300
-  }]
+  },
+  "elemental-pay-api": {
+    "client_name": "elemental-pay-api",
+    "token_endpoint_auth_method": "client_secret_basic",
+    "grants": ["authorization_code", "refresh_token", "access_token"],
+    "response_types": ["code"],
+    "access_token_lifetime": 5184000,
+    "authorization_code_lifetime": 300,
+    "scope": "email profile",
+    "redirect_uris":[
+      "https://elemental-pay.local/auth/callback",
+      "https://staging.elementalpay.com/auth/callback",
+      "https://elementalpay.com/auth/callback"
+    ]
+  }
 }

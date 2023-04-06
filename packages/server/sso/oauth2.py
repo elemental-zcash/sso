@@ -126,7 +126,8 @@ class MyIntrospectionEndpoint(IntrospectionEndpoint):
         # return client.client_type == 'internal'
         # return True
         # print({ 'client_name': client.client_metadata.get('client_name') })
-        return client.client_metadata.get('client_name') == 'sso-system'
+        # print({'client_name': client.client_name})
+        return client.client_name == 'sso-system'
 
 
 query_client = create_query_client_func(db.session, OAuth2Client)

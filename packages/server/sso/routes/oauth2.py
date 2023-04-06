@@ -63,18 +63,8 @@ def split_by_crlf(s):
 #     ('sso-system', $1, ARRAY ['client'], NULL, 5184000, 300)
 #   RETURNING *;
 
-
-def generate_client(data, token_endpoint_auth_method='none'):
-    token_endpoint_auth_method=data.get("token_endpoint_auth_method", "none")
-
-    client_id = gen_salt(24)
-    client_id_issued_at = int(time.time())
-    client = OAuth2Client(
-        client_id=client_id,
-        client_id_issued_at=client_id_issued_at,
-        client_name=data.get("client_name")
-    )
-    client_metadata = {
+def get_client_metadata(data, token_endpoint_auth_method):
+    return {
         "client_name": data.get("client_name"),
         "client_uri": data.get("client_uri"),
         "grant_types": data.get("grants"),
@@ -83,7 +73,19 @@ def generate_client(data, token_endpoint_auth_method='none'):
         "scope": data.get("scope"),
         "token_endpoint_auth_method": token_endpoint_auth_method,
     }
+
+def generate_client(data):
+    token_endpoint_auth_method=data.get("token_endpoint_auth_method", "none")
+
+    client_id = gen_salt(24)
+    client_id_issued_at = int(time.time())
+    client = OAuth2Client(
+        client_id=client_id,
+        client_id_issued_at=client_id_issued_at,
+    )
+    client_metadata = get_client_metadata(data, token_endpoint_auth_method)
     client.set_client_metadata(client_metadata)
+    client._client_name = data.get("client_name")
     if token_endpoint_auth_method == 'none':
         client.client_secret = ''
     elif current_app.config.get('CLIENT_SECRETS') != 'None' and current_app.config.get('CLIENT_SECRETS').get(data.get("client_name")) != 'None':
@@ -95,6 +97,26 @@ def generate_client(data, token_endpoint_auth_method='none'):
     db.session.commit()
 
     return
+
+def update_client(data):
+    client = OAuth2Client.query.filter_by(_client_name=data.get('client_name')).first()
+    token_endpoint_auth_method=data.get("token_endpoint_auth_method", "none")
+    if (client is None):
+        return "Client not found"
+    
+    client.set_client_metadata(get_client_metadata(data, token_endpoint_auth_method))
+
+    if token_endpoint_auth_method == 'none' and client.client_secret is not None:
+        client.client_secret = ''
+    # We might want to change the secret from the env
+    elif current_app.config.get('CLIENT_SECRETS') != 'None' and current_app.config.get('CLIENT_SECRETS').get(data.get("client_name")) != 'None':
+        client.client_secret = current_app.config.get('CLIENT_SECRETS').get(data.get("client_name"))
+    elif client.client_secret is None:
+        client.client_secret = gen_salt(48)
+
+    db.session.commit()
+
+
 
 # @bp.route('/create_client', methods=('GET', 'POST'))
 # def create_client():
@@ -150,7 +172,7 @@ def authorize():
         except OAuth2Error as error:
             return error.error
         return jsonify({'user': user.serialize(), 'grant': {\
-            'client': { 'client_name': grant.client.client_name },\
+            'client': { 'client_id': grant.client.client_id, 'client_name': grant.client.client_name },\
             'request': {'scope': grant.request.scope }\
         }})
         # return render_template('authorize.html', user=user, grant=grant)
@@ -186,4 +208,4 @@ def introspect_token():
 @require_oauth('profile')
 def api_me():
     user = current_token.user
-    return jsonify(id=user.id, username=user.username)
+    return jsonify(id=user.uuid, username=user.login_id)

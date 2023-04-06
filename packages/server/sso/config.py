@@ -11,7 +11,9 @@ class Config(object):
   SECRET_KEY = os.environ['SECRET_KEY']
   OAUTH2_REFRESH_TOKEN_GENERATOR = True
   CLIENT_SECRETS = {
-    'sso-system': os.environ['CLIENT_SECRET_SSO_SYSTEM']
+    'sso-system': os.environ['CLIENT_SECRET_SSO_SYSTEM'],
+    'sso-api': os.environ['CLIENT_SECRET_SSO_API'],
+    'elemental-pay-api': os.environ['CLIENT_SECRET_ELEMENTAL_PAY_API']
   }
   SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
 

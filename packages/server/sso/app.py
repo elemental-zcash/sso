@@ -3,7 +3,7 @@
 
 from flask import Flask, current_app
 from flask.cli import with_appcontext
-from sqlalchemy import select
+from sqlalchemy import select, text
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
@@ -22,7 +22,6 @@ from db import db
 from models import User, OAuth2Client
 from oauth2 import config_oauth
 
-load_dotenv('.env') # FIXME: For Docker, maybe better to use env_file
 
 # FIXME: This is for Docker, maybe there's a better alternative
 os.environ['AUTHLIB_INSECURE_TRANSPORT'] = '1'
@@ -43,7 +42,7 @@ cors = CORS()
 
 @click.command()
 @with_appcontext
-def create_clients():
+def populate_clients():
     OAuth2Client.insert_clients()
 
     return
@@ -65,6 +64,14 @@ def create_app(config_name = None):
     if app.config['USE_CORS']:
         cors.init_app(app)
 
+    try:
+        with app.app_context():
+            # db.init_app(app)
+            db.session.execute(text('SELECT 1'))
+    except Exception as e:
+        print('Error connecting to database:', str(e))
+        exit(1)
+
     from api.errors import errors
     app.register_blueprint(errors)
 
@@ -82,7 +89,7 @@ def create_app(config_name = None):
     from routes.home import bp as home_bp
     app.register_blueprint(home_bp, url_prefix='')
 
-    app.cli.add_command(create_clients, 'create-clients')
+    app.cli.add_command(populate_clients, 'populate-clients')
     # @app.cli.command("create-clients")
     
     return app

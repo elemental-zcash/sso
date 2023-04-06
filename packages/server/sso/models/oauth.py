@@ -19,17 +19,24 @@ class OAuth2Client(db.Model, OAuth2ClientMixin):
     user_id = db.Column(
         db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
     user = db.relationship('User')
-    client_name = db.Column(db.String(120), nullable=True)
+    _client_name = db.Column('client_name', db.String(120), nullable=True)
 
     @staticmethod
     def insert_clients():
-        from routes.oauth2 import generate_client
+        from routes.oauth2 import generate_client, update_client
         with open(os.path.join(current_app.root_path, "oauth_clients.json"), "r") as jsonfile:
             data = json.load(jsonfile)
             print("Read successful")
         # print(data["clients"])
-        for client in data["clients"]:
-            generate_client(client)
+        for client_name in data:
+            client = data[client_name]
+            existing_client = OAuth2Client.query.filter_by(_client_name=client_name).first()
+            if (existing_client is None):
+                print('Generating client: ' + client_name)
+                generate_client(client)
+            else:
+                update_client(client)
+                print('Updating client: ' + client_name)
         return
 
 

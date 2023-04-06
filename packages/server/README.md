@@ -5,7 +5,7 @@ pipenv run flask db init
 pipenv run flask db migrate
 pipenv run flask db upgrade
 
-pipenv run flask create-clients # create OAuth2 clients
+pipenv run flask populate-clients # create OAuth2 clients
 ```
 
 - https://uwsgi-docs.readthedocs.io/en/latest/WSGIquickstart.html#deploying-flask
