@@ -68,7 +68,7 @@ const corsOptions = process.env.NODE_ENV === 'development' ? {
   origin: ['https://elemental-sso.local', 'http://localhost:3000'],
   optionsSuccessStatus: 200,
 } : {
-  origin: ['https://sso-staging.elementalzcash.com'],
+  origin: ['https://sso-staging.elementalzcash.com', 'https://sso.elementalzcash.com'],
   optionsSuccessStatus: 200,
 }
 
