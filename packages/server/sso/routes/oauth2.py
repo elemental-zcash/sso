@@ -77,7 +77,10 @@ def get_client_metadata(data, token_endpoint_auth_method):
 def generate_client(data):
     token_endpoint_auth_method=data.get("token_endpoint_auth_method", "none")
 
-    client_id = gen_salt(24)
+    if current_app.config.get('CLIENT_IDS') != 'None' and current_app.config.get('CLIENT_IDS').get(data.get("client_name")) != 'None':
+        client_id = current_app.config.get('CLIENT_IDS').get(data.get("client_name"))
+    else:
+        client_id = gen_salt(24)
     client_id_issued_at = int(time.time())
     client = OAuth2Client(
         client_id=client_id,
