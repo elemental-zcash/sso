@@ -2,9 +2,6 @@
   "name": "@elemental-zcash/sso",
   "private": true,
   "version": "0.0.1",
-  "workspaces": [
-    "./packages/*"
-  ],
   "description": "Elemental Zcash SSO OAuth2 server",
   "main": "index.js",
   "scripts": {
