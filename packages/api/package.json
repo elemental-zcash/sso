@@ -16,8 +16,9 @@
     "dev": "NODE_ENV=development nodemon --watch src -e ts,ejs --exec npm run dev:start",
     "dev:start": "npm-run-all clean build start",
     "start:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up --build",
-    "start:staging": "docker compose -f docker-compose.yml -f docker-compose.staging.yml up",
-    "start:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up",
+    "start:staging": "docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d",
+    "start:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d",
+    "stop": "docker compose -f docker-compose.yml down",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

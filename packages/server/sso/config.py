@@ -10,6 +10,11 @@ class Config(object):
   USE_CORS = False
   SECRET_KEY = os.environ['SECRET_KEY']
   OAUTH2_REFRESH_TOKEN_GENERATOR = True
+  CLIENT_IDS = {
+    'sso-system': os.environ['CLIENT_ID_SSO_SYSTEM'],
+    'sso-api': os.environ['CLIENT_ID_SSO_API'],
+    'elemental-pay-api': os.environ['CLIENT_ID_ELEMENTAL_PAY_API']
+  }
   CLIENT_SECRETS = {
     'sso-system': os.environ['CLIENT_SECRET_SSO_SYSTEM'],
     'sso-api': os.environ['CLIENT_SECRET_SSO_API'],
