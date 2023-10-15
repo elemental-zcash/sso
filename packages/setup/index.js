@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
+const fs = require('fs').promises;
+const { readFileSync, writeFileSync } = require('fs');
 const nunjucks = require('nunjucks');
 
-const template = fs.readFileSync('./docker-compose.env.yml.template', 'utf-8');
-const envTemplate = fs.readFileSync('../server/.env.example', 'utf-8');
+const template = readFileSync('./docker-compose.env.yml.template', 'utf-8');
+const envTemplate = readFileSync('../server/.env.example', 'utf-8');
+// const env = readFileSync('../../.env', 'utf-8'); TODO: 
 
 const config = {
   ssoWebHost: {
@@ -29,6 +31,12 @@ function generateToken(length) {
 
 // const client_secret = ;
 
+const getDatabaseUrl = () => {
+  const dbConfig = JSON.parse(readFileSync('../../database.config.json', 'utf-8'));
+
+  return `postgres://sso_local:${dbConfig.databases.sso_local.password}@database:5432/sso_local`
+}
+
 const getServerEnv = () => ({
   appSettings: 'config.ProductionConfig',
   secretKey: generateToken(72),
@@ -38,7 +46,7 @@ const getServerEnv = () => ({
   clientSecretSsoSystem: generateToken(72),
   clientSecretSsoApi: generateToken(72),
   clientSecretElementalPayApi: generateToken(72),
-  databaseUrl: process.env.DATABASE_URL,
+  databaseUrl: getDatabaseUrl(),
   databaseUrlTesting: process.env.DATABASE_URL_TESTING,
 })
 
@@ -92,11 +100,11 @@ const main = async () => {
         env,
       });
   
-      fs.writeFileSync(`${service}/docker-compose.${env}.yml`, output);
+      writeFileSync(`../${service}/docker-compose.${env}.yml`, output);
     }
   }
   const serverEnvOutput = nunjucks.renderString(envTemplate, getServerEnv())
-  fs.writeFileSync('./server/.env', serverEnvOutput);
+  writeFileSync('../server/.env', serverEnvOutput);
   
   // const data = {
 

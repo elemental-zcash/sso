@@ -1,1 +1,3 @@
 version: '3'
+services:
+  sso_flask_server:

@@ -3,7 +3,7 @@ services:
   sso_flask_server:
     build: ./
     ports:
-      - "3535:5050"
+      - "3535:5000"
     hostname: sso_flask_server
     env_file:
     - .env

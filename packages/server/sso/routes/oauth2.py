@@ -9,7 +9,7 @@ import json
 from db import db
 
 from models import User, OAuth2Client
-from oauth2 import authorization, require_oauth, MyIntrospectionEndpoint
+from oauth2 import authorization, require_oauth, MyIntrospectionEndpoint, get_token_userinfo
 
 bp = Blueprint('oauth', __name__)
 
@@ -117,6 +117,11 @@ def update_client(data):
     elif client.client_secret is None:
         client.client_secret = gen_salt(48)
 
+    if current_app.config.get('CLIENT_IDS') != 'None' and current_app.config.get('CLIENT_IDS').get(data.get("client_name")) != 'None':
+        client.client_id = current_app.config.get('CLIENT_IDS').get(data.get("client_name"))
+    elif client.client_secret is None:
+        client.client_id = gen_salt(48)
+
     db.session.commit()
 
 
@@ -206,6 +211,11 @@ def introspect_token():
 
 @bp.route('/login', methods=['POST'])
 
+
+@bp.route('/oauth/userinfo', methods=['GET'])
+@require_oauth()
+def get_oauth_userinfo():
+    return jsonify(get_token_userinfo(current_token))
 
 @bp.route('/api/me')
 @require_oauth('profile')
