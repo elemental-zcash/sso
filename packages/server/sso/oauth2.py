@@ -93,6 +93,22 @@ def get_token_username(token):
 def get_token_user_sub(token):
     return token.user.uuid
 
+def get_token_userinfo(token):
+    return {
+        'sub': get_token_user_sub(token),
+        'username': get_token_username(token),
+        'email': token.user.email,
+    }
+
+# Example UserInfo object
+# {
+#   "sub"         : "83692",
+#   "name"        : "Alice Adams",
+#   "email"       : "alice@example.com",
+#   "email_verified": true,
+#   "picture"     : "https://example.com/83692/photo.jpg"
+# }
+
 class MyIntrospectionEndpoint(IntrospectionEndpoint):
     def query_token(self, token, token_type_hint):
         if token_type_hint == 'access_token':

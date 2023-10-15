@@ -3,14 +3,13 @@ import { Box, Text, Row } from 'elemental-react';
 import { Button } from '@elemental-zcash/components';
 import InputField from '@elemental-zcash/components/lib/forms/InputField';
 import TextInput from '@elemental-zcash/components/lib/forms/TextInput';
-
-import Section from '../components/Section';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client';
+import { Section, Link } from '#components';
+
 import GET_VIEWER from '../graphql/queries/viewer';
 import useViewer, { Viewer, ViewerNotFoundError } from '../hooks/use-viewer';
 import VerifyEmailLoginBox from '../components/auth/verify-email-login-box';
 import SEND_VERIFICATION_EMAIL from '../graphql/mutations/send-verification-email';
-import { Link } from '../components/common';
 import { TextButton } from '@elemental-zcash/components/lib/buttons';
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
@@ -29,7 +28,7 @@ export default function Home() {
 
 
   useEffect(() => {
-    if (!loading && !isLoggedIn) {
+    if (!loading && !isLoggedIn && !localStorage.getItem('accessToken')) {
       router.push('/auth/login');
     }
   }, [loading, isLoggedIn, router]);
@@ -94,13 +93,13 @@ export default function Home() {
                 </Box>
               ) : (
                 <Box>
-                  <Link href="/auth/signup">
+                  <Link href="/auth/signup">{/* @ts-ignore */}
                     <Button>SIGN UP</Button>
                   </Link>
                   <Row flex={1}>
                     <Text style={{ display: 'inline' }}>
                       {'Already have an account? '}
-                      <Link href="/auth/login">
+                      <Link href="/auth/login">{/* @ts-ignore */}
                         <Text color="blue" style={{ display: 'inline' }}>Sign In</Text>
                       </Link>
                     </Text>

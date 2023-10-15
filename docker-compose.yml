@@ -1,19 +1,16 @@
 version: '3'
+name: elemental-zcash-sso
 services:
-  nginx-proxy:
-    image: nginxproxy/nginx-proxy:0.9.1-alpine
-    container_name: sso-nginx-proxy
-    # volumes:
-    #  - ./nginx/nginx.conf:/etc/nginx/conf.d/my_proxy.conf:ro
-    # build: ./docker/nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    #environment:
-    #  - DEFAULT_HOST=error.local
+  sso_flask_server:
+    build: ./packages/server
+    # ports:
+    #   - "5000:5000"
+    hostname: sso_flask_server
+    env_file:
+    - ./packages/server/.env
+    container_name: sso_flask_server
     networks:
       - elemental_net
-      - sso_next_net
   # mail_check:
   #   image: reacherhq/backend:latest
   #   container_name: mail_check
@@ -29,26 +26,21 @@ services:
   api:
     build: ./packages/api
     environment:
-      - PORT=8081
+      - PORT=8080
+      - FLASK_API_URL=http://sso_flask_server:5000
     networks:
-      - sso_net
-      # - sso_next_net
       - elemental_net
     env_file:
       ./packages/api/.env
-    #volumes:
-    #  - ./packages/api:/usr/src/app
-    # links:
-    #   - redis
-      # - zecwallet_api
-      # - database
-    depends_on:
-      - nginx-proxy
+  sso_web:
+    build: ./packages/web
+    environment:
+      - PORT=3000
+    env_file:
+      ./packages/web/.env
+    networks:
+      - elemental_net
 networks:
-  sso_net:
-  sso_next_net:
-    # external: true
-    driver: bridge
   elemental_net:
     external: true
     driver: bridge

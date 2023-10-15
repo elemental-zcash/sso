@@ -19,6 +19,6 @@ RUN pip install -r requirements.txt
 
 # copy project
 COPY sso/ /usr/src/app/
-COPY .env.docker.local /usr/src/app/.env
+# COPY .env.docker.local /usr/src/app/.env
 
-ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:5050", "wsgi:app"]
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]

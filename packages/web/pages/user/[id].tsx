@@ -3,9 +3,8 @@ import Link from 'next/link';
 import { Box, Row, ThemeProvider } from 'elemental-react';
 import { AutoTextArea, Button, TextInput, InputField, CryptoAddressCopy, theme, QRCode, Select } from '@elemental-zcash/components';
 import * as Yup from 'yup';
+import { Text, TextLink, Section } from '#components';
 
-import Section from '../../components/Section';
-import { Text, TextLink } from '../../components/common';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client';
 // @ts-ignore
 import { InvoiceElement } from '@elemental-pay/components';

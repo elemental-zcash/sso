@@ -1,6 +1,6 @@
 import { Box } from 'elemental-react';
 import React from 'react';
-import { Text, TextLink } from '../common';
+import { Text, TextLink } from '#components';
 
 export default function VerifyEmailLoginBox({ email, onPressResend }) {
   return (

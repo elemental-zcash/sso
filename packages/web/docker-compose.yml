@@ -7,6 +7,12 @@ services:
     networks:
       - sso_net
       - elemental_net
+    volumes:
+      - ./:/usr/src/app
+      # - ./node_modules/:/usr/src/app/node_modules
+      - /usr/src/app/node_modules
+      - /usr/src/app/.next
+
       # - elemental_net
     # depends_on:
     #   - nginx-proxy

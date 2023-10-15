@@ -1,19 +1,30 @@
 version: '3' # Version of the Docker Compose file format
+name: elemental-zcash-sso
 services:
-  nginx-proxy:
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./docker/html:/var/www/html
-      - ./certs:/etc/nginx/certs
-      - ./docker/vhost.d:/etc/nginx/vhost.d:ro
-      - ./nginx-conf:/etc/nginx/conf.d
-    #  - ./nginx/nginx.conf:/etc/nginx/conf.d/my_proxy.conf:ro
   api:
     environment:
       - VIRTUAL_HOST=api.elemental-sso.local
-      - VIRTUAL_PORT=8081
+      - VIRTUAL_PORT=8080
+    # labels:
+    #   - dev.orbstack.domains=api.elemental-sso.local
+  sso_web:
+    build:
+      context: ./packages/web
+      target: dev
+    command: npm run dev
+    environment:
+      - VIRTUAL_HOST=elemental-sso.local
+      - VIRTUAL_PORT=3000
       - NODE_ENV=development
-      - APP_ENV=local
+      - NEXT_PUBLIC_APP_ENV=local
+    volumes:
+      - ./packages/web:/app
+      - /app/node_modules
+      - /app/.next
+    # labels:
+    #   - dev.orbstack.domains=elemental-sso.local
+
+
   # web:
   #   environment:
   #     - VIRTUAL_HOST=elemental-sso.local

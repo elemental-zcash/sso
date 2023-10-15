@@ -4,8 +4,8 @@ import { Box, Text, Row } from 'elemental-react';
 import { Button } from '@elemental-zcash/components';
 import InputField from '@elemental-zcash/components/lib/forms/InputField';
 import TextInput from '@elemental-zcash/components/lib/forms/TextInput';
+import { Section } from '#components';
 
-import Section from '../../components/Section';
 import VerifyEmail from '../../components/auth/verify-email';
 
 

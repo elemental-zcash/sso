@@ -10,6 +10,7 @@ export const oAuthClient = new OAuth2Client({
   authorizationEndpoint: `${process.env.FLASK_API_URL}/oauth/authorize`,
   tokenEndpoint: `${process.env.FLASK_API_URL}/oauth/token`,
   loginEndpoint: `${process.env.FLASK_API_URL}/api/login`,
+  userInfoEndpoint: `${process.env.FLASK_API_URL}/userinfo`,
   // redirectUri: 'http://localhost:3000/auth/callback',
   // scope: 'openid profile email',
   // authorizationUri: 'https://your-auth-server.com/oauth2/authorize',

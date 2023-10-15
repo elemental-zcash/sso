@@ -13,12 +13,14 @@ class Config(object):
   CLIENT_IDS = {
     'sso-system': os.environ['CLIENT_ID_SSO_SYSTEM'],
     'sso-api': os.environ['CLIENT_ID_SSO_API'],
-    'elemental-pay-api': os.environ['CLIENT_ID_ELEMENTAL_PAY_API']
+    'elemental-pay-api': os.environ['CLIENT_ID_ELEMENTAL_PAY_API'],
+    'zpublish-api': os.environ['CLIENT_ID_ZPUBLISH_API']
   }
   CLIENT_SECRETS = {
     'sso-system': os.environ['CLIENT_SECRET_SSO_SYSTEM'],
     'sso-api': os.environ['CLIENT_SECRET_SSO_API'],
-    'elemental-pay-api': os.environ['CLIENT_SECRET_ELEMENTAL_PAY_API']
+    'elemental-pay-api': os.environ['CLIENT_SECRET_ELEMENTAL_PAY_API'],
+    'zpublish-api': os.environ['CLIENT_SECRET_ZPUBLISH_API']
   }
   SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
 

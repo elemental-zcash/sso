@@ -2,22 +2,20 @@ import http from 'http';
 // import RedisServer from 'redis-server';
 import { promisify } from 'util';
 import dotenv from 'dotenv';
-import { Client } from 'redis-om';
+import bodyParser from 'body-parser';
+import cors from 'cors';
 // import { Client as RedisOmClient } from './data/custom-redis-om-client';
 
 dotenv.config();
 
 
-import app from './app';
+import app, { server } from './app';
 import { publisher, redisClient, subscriber } from './data';
 import { initializeRedisOm } from './data/redis';
+import { getContextFromRequest, makeApolloServer } from './apollo';
+import { expressMiddleware } from '@apollo/server/express4';
 
 const port = process.env.PORT || 8080;
-
-const server = http.createServer(app);
-
-// export let redisOmClient: Client;
-
 
 const onListening = async () => {
   const address = server.address();

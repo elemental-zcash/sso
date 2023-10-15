@@ -5,9 +5,9 @@ import { theme } from '@elemental-zcash/components';
 import { RPNativeProvider } from '@react-platform/native';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ApolloProvider } from '@apollo/client';
+import { useWindowViewport } from '#components';
 
 
-import useWindowViewport from '../components/hooks/use-window-viewport';
 import apolloClient from '../apollo-client';
 
 import '../styles/layout.css';

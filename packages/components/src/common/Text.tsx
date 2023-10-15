@@ -1,7 +1,10 @@
 import { Text as _Text } from 'elemental-react';
 import { ComponentProps, CSSProperties } from 'react';
 
-const Text = ({ pointer, style, ...props }: ComponentProps<typeof _Text> & { pointer?: boolean, style?: CSSProperties }) => {
+type TextProps = ComponentProps<typeof _Text> & { pointer?: boolean, style?: CSSProperties }
+
+// FIXME: any type
+const Text = ({ pointer, style, ...props }: any) => {
   return (
     <_Text 
       display="inline"
@@ -11,7 +14,10 @@ const Text = ({ pointer, style, ...props }: ComponentProps<typeof _Text> & { poi
   );
 };
 
-export const TextLink = ({ ...props }): ComponentProps<typeof Text> => {
+// interface TextLinkProps extends TextProps {}
+// type TextLinkProps = 
+
+export const TextLink = (props: any) => {
   return (
     <Text
       pointer

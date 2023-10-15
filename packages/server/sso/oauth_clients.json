@@ -11,8 +11,11 @@
       "http://127.0.0.1:3000",
       "http://localhost:3000",
       "https://elemental-pay.local/auth/callback",
+      "https://zpublish.local/auth/callback",
       "https://staging.elementalpay.com/auth/callback",
+      "https://staging.zpublish.org/auth/callback",
       "https://elementalpay.com/auth/callback",
+      "https://zpublish.org/auth/callback",
       "http://127.0.0.1:4000/auth/callback"
     ]
   },
@@ -36,6 +39,22 @@
       "https://elemental-pay.local/auth/callback",
       "https://staging.elementalpay.com/auth/callback",
       "https://elementalpay.com/auth/callback"
+    ]
+  },
+  "zpublish-api": {
+    "client_name": "zpublish-api",
+    "token_endpoint_auth_method": "client_secret_basic",
+    "grants": ["authorization_code", "refresh_token", "access_token"],
+    "response_types": ["code"],
+    "access_token_lifetime": 5184000,
+    "authorization_code_lifetime": 300,
+    "scope": "email profile",
+    "redirect_uris":[
+      "https://zpublish.local/auth/callback",
+      "https://staging.zpublish.org/auth/callback",
+      "https://zpublish.org/auth/callback",
+      "http://127.0.0.1:3030/auth/callback",
+      "http://127.0.0.1:3030/api/auth/callback/elemental-sso"
     ]
   }
 }

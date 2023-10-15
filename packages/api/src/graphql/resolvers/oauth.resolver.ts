@@ -1,7 +1,7 @@
 import { addMinutes } from 'date-fns';
 import fetch from 'node-fetch';
 
-import { GraphQLContext } from '../../app';
+import { GraphQLContext } from '../../apollo';
 import { ElementalGraphQLError } from '../../errors';
 
 
@@ -28,12 +28,12 @@ const resolver = {
   },
   Mutation: {
     authorize: async (_, { input, confirm }, context: GraphQLContext) => {
-      const { clientId, scope, redirectUri } = input;
+      const { clientId, scope, redirectUri, state } = input;
       const { token } = context;
 
-      const { code, redirectUri: _redirectUri, ...etc } = await context.oAuth2Client.authorize(token, 'profile', clientId, redirectUri, confirm);
+      const { code, redirectUri: _redirectUri, state: _state, ...etc } = await context.oAuth2Client.authorize(token, 'profile', clientId, redirectUri, confirm, state);
       
-      console.log('code, _redirectUri: ', JSON.stringify({ code, _redirectUri, etc }));
+      console.log('Mutation.authorize(): ', JSON.stringify({ code, state, _redirectUri, etc }));
       
       // type AuthorizationGrantResponse {
       //   client: OAuth2Client
@@ -43,6 +43,7 @@ const resolver = {
           __typename: 'AuthorizationCode',
           code,
           redirectUri: _redirectUri,
+          state: _state,
           // client: grant.client,
           // request: grant.request,
       }

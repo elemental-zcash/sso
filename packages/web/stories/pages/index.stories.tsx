@@ -1,15 +1,12 @@
-import Home from "../../pages/index";
+import Home from '../../pages/index';
 import { AppWrapper } from '../../pages/_app';
+import appWrapper from '../decorators';
 
 export default {
   title: "Pages/Home",
   component: Home,
   decorators: [
-    (Story) => ( // @ts-ignore
-      <AppWrapper>
-        <Story />
-      </AppWrapper>
-    )
+    appWrapper
   ]
 };
 

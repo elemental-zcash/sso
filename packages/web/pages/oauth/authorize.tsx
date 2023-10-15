@@ -3,7 +3,8 @@ import { gql, useMutation, useQuery } from '@apollo/client';
 import { useRouter } from 'next/router';
 import { Box, Text } from 'elemental-react';
 import Head from 'next/head';
-import Section from '../../components/Section';
+import { Section } from '#components';
+
 import { getErrorCode } from '../../graphql/utils';
 import { Button } from '@elemental-zcash/components';
 
@@ -19,6 +20,7 @@ const AUTHORIZE_MUTATION = gql`
     authorize(input: $input, confirm: $confirm) {
       code
       redirectUri
+      state
     }
   }
 `;
@@ -59,13 +61,13 @@ function AuthorizePage({ ...props }) {
       event.preventDefault();
     }
     authorize({
-      variables: { input: { clientId: client_id, redirectUri: redirect_uri, scope }, confirm: true },
+      variables: { input: { clientId: client_id, redirectUri: redirect_uri, scope, state }, confirm: true },
       onCompleted: (data) => {
         // Perform your callback action here using the data returned by the mutation
         // console.log('Authorization code:', data.authorize.code);
         // console.log('Redirect URI:', data.authorize.redirectUri);
         // window.location.href = data.authorize.redirectUri;
-        router.replace(`${data.authorize.redirectUri}?code=${data.authorize.code}`)
+        router.replace(`${data.authorize.redirectUri}?code=${data.authorize.code}&state=${data.authorize.state}`)
       },
     });
   }

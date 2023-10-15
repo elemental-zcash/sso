@@ -5,7 +5,7 @@ import { Button } from '@elemental-zcash/components';
 import InputField from '@elemental-zcash/components/lib/forms/InputField';
 import TextInput from '@elemental-zcash/components/lib/forms/TextInput';
 
-import Section from '../../components/Section';
+import { Section } from '#components';
 import ResetPasswordForm from '../../components/auth/reset-password-form';
 
 

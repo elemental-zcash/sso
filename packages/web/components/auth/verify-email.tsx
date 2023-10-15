@@ -4,7 +4,7 @@ import { Box } from 'elemental-react';
 import Link from 'next/link';
 import { Button } from '@elemental-zcash/components';
 
-import { Text } from '../common';
+import { Text } from '#components';
 import { useMutation } from '@apollo/client';
 import VERIFY_EMAIL from '../../graphql/mutations/verify-email';
 import GET_VIEWER from '../../graphql/queries/viewer';
