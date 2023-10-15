@@ -6,7 +6,7 @@ import fetch from 'node-fetch';
 // import ExpressO
 
 import { APIError, ErrorCodes } from '../utils';
-import { GraphQLContext } from '../../app';
+import { GraphQLContext } from '../../apollo';
 // import { omClient } from '../../data/redis';
 // import { redisOmClient } from '../../server';
 import { User, UserType } from '../../models';
@@ -168,7 +168,7 @@ export default {
 
       const code = await context.oAuth2Client.login(username || email, password);
 
-      const { access_token, expires_in, token_type, refresh_token } = await context.oAuth2Client.token(code, '');
+      const { access_token, expires_in, token_type, refresh_token } = await context.oAuth2Client.token(code, 'http://127.0.0.1:3000');
 
       const user = await getUserFromAccessToken(access_token);
 

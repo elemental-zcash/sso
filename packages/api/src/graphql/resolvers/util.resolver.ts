@@ -1,4 +1,4 @@
-import { GraphQLContext } from '../../app';
+import { GraphQLContext } from '../../apollo';
 import init from '../../scripts/init-sql';
 
 const resolver = {

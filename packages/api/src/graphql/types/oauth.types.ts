@@ -3,6 +3,7 @@ export default `
     clientId: String!
     redirectUri: String
     scope: String!
+    state: String
   }
 
   type GrantRequest {
@@ -22,6 +23,7 @@ export default `
   type AuthorizationCode {
     code: String
     redirectUri: String
+    state: String
   }
 
   type Query {

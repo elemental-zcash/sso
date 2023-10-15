@@ -14,7 +14,8 @@ type Config = {
   apiClientSecret: string,
   tokenEndpoint: string,
   authorizationEndpoint: string,
-  loginEndpoint: string
+  loginEndpoint: string,
+  userInfoEndpoint: string,
 };
 
 class OAuth2Client {
@@ -78,8 +79,8 @@ class OAuth2Client {
     return await response.json();
   }
 
-  async authorize(token, scope, clientId, redirectUri, confirm) {
-    const state = Math.random().toString(36).substring(2);
+  // FIXME: Debugging hack with random state (to change failure mode)
+  async authorize(token, scope, clientId, redirectUri, confirm, state) {
     const url = `${this.config.authorizationEndpoint}`;
 
     const queryParams = new URLSearchParams();
@@ -113,8 +114,9 @@ class OAuth2Client {
       // console.log(JSON.stringify({ data }))
       const urlSearchParams = new URLSearchParams(_redirectUri.split('?')[1]);
       const authorizationCode = urlSearchParams.get('code');
+      const state = urlSearchParams.get('state');
   
-      return { code: authorizationCode, redirectUri: _redirectUri.split('?')[0] };
+      return { code: authorizationCode, redirectUri: _redirectUri.split('?')[0], state };
     } else {
       if (!response.ok) {
         const error = await response.json();
@@ -156,6 +158,31 @@ class OAuth2Client {
     }
 
     return await response.json();
+  }
+
+  async userinfo(token) {
+    const url = `${this.config.userInfoEndpoint}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('User info request failed');
+    }
+
+    const data = await response.json();
+    console.log(JSON.stringify({ data }))
+
+    if (!data.active) {
+      throw new Error('Token is invalid');
+    }
+
+    return data;  
   }
 
   async login(username, password) {
