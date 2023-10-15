@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
+    "baseUrl": "./",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -15,9 +16,11 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
+      "#components/*": ["../components/*"],
+      "#components": ["../components/"],
       "elemental-color/*": ["./node_modules/elemental-color/*"],
     }
   },
-  "exclude": ["node_modules"],
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"]
+  "exclude": ["node_modules", "stories"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "stories/components/getting-started.mdx"]
 }

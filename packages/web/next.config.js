@@ -1,6 +1,6 @@
 const path = require('path');
 const withTM = require('next-transpile-modules')([
-  '@elemental-zcash/components', '@elemental-pay/components', '@elemental-design/material-color-utilities', 'react-primitives-svg', 'elemental-react',
+  '@elemental-zcash/sso-components', '@elemental-zcash/components', '@elemental-pay/components', '@elemental-design/material-color-utilities', 'react-primitives-svg', 'elemental-react',
 ]);
 
 module.exports = withTM({
@@ -10,13 +10,13 @@ module.exports = withTM({
   // },
   // pageExtensions: getBareExtensions(['web']),
   // pageExtensions: ['web', 'web.js', 'mdx', 'md', 'jsx', 'js', 'tsx', 'ts'],
-  webpackDevMiddleware: config => {
-    config.watchOptions = {
-      poll: 1000,
-      aggregateTimeout: 300,
-    }
-    return config
-  },
+  // webpackDevMiddleware: config => {
+  //   config.watchOptions = {
+  //     poll: 1000,
+  //     aggregateTimeout: 300,
+  //   }
+  //   return config
+  // },
   webpack: (config) => ({
     ...config,
     module: {
@@ -31,7 +31,16 @@ module.exports = withTM({
         ...(config.resolve.alias || {}),
         'react-native$': 'react-native-web',
         '@elemental-zcash/icons': path.resolve(__dirname, './node_modules/@elemental-zcash/icons/'),
-        '@elemental-zcash/components': path.resolve(__dirname, './node_modules/@elemental-zcash/components/'),
+        // '@elemental-zcash/components': path.resolve(__dirname, './node_modules/@elemental-zcash/components/'),
+        // '#components/*': path.resolve(__dirname, '../components/*'),
+        // '#components': path.resolve(__dirname, '../components'),
+        '@elemental-zcash/components': path.resolve(__dirname, './node_modules/@elemental-zcash/components'),
+        '@elemental-zcash/sso-components': path.resolve(__dirname, './node_modules/@elemental-zcash/sso-components'),
+        '#components/*': path.resolve(__dirname, './node_modules/@elemental-zcash/sso-components/*'),
+        '#components': path.resolve(__dirname, './node_modules/@elemental-zcash/sso-components'),
+        // 'react-select': path.resolve(__dirname, '../node_modules/react-select/'),
+        '@elemental-pay/components': path.resolve(__dirname, './node_modules/@elemental-pay/components/elemental-pay/'),
+
         'react-select': path.resolve(__dirname, './node_modules/react-select/'),
         '@elemental-pay/components': path.resolve(__dirname, './node_modules/@elemental-pay/components'),
         'react-primitives': path.resolve(__dirname, './node_modules/react-primitives/'),
