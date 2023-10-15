@@ -1,3 +1,4 @@
+
 import { InputField, AutoTextArea, TextInput, Button } from '@elemental-zcash/components';
 import { Box, Text } from 'elemental-react';
 import { Formik } from 'formik';
@@ -6,6 +7,8 @@ import * as Yup from 'yup';
 import { ApolloError, gql, useMutation } from '@apollo/client';
 
 import client from '../../apollo-client';
+
+import { FormTextInput } from '../common';
 
 import PasswordField from './PasswordField';
 import SIGNUP from '../../graphql/mutations/signup';
@@ -16,21 +19,6 @@ import { config } from '../../config';
 import { SignupType } from './constants';
 import { useRouter } from 'next/router';
 
-const FormTextInput = ({ label, value, onChange, ...props }) => (
-  <TextInput
-    placeholder={label}
-    // @ts-ignore
-    value={value}
-    onChange={onChange}
-    pb={0}
-    px={3}
-    borderWidth={1}
-    borderRadius={4}
-    height={40}
-    borderColor="#e2e2f2"
-    {...props}
-  />
-);
 
 const makeSchema = (requiresZcashaddress = false) => Yup.object().shape({
   ...(requiresZcashaddress && { zcashaddress: Yup.string()
@@ -103,7 +91,7 @@ const getToken = async (code) => {
   localStorage.setItem('tokenType', token_type);
 }
 
-const RegisterForm = () => {
+const SignupForm = () => {
   const router = useRouter();
   const [signupStage, setSignupStage] = useState(SignupStage.SIGNUP);
   const [signup, { data, loading, error }] = useMutation<{ signup: SignupSuccess | SignupError }, { input: SignupInput }>(SIGNUP);
@@ -125,7 +113,7 @@ const RegisterForm = () => {
           email: '',
           password: ''
         }}
-        validationSchema={signupType === SignupType.ZCASH ? SignupWithZcashSchema : SignupSchema}
+        validationSchema={signupType === SignupType.ZCASH ? SignupWithZcashSchema : SignupSchema} //@ts-ignore
         onSubmit={async (values) => {
           try {
             const input: SignupInput = {
@@ -226,7 +214,7 @@ const RegisterForm = () => {
                   <Text center bold fontSize={24} mb={3}>Check Your Email</Text>
                   <Text>
                     {'We sent a verification link to '}
-                    <Text bold>{values.email}</Text>
+                    <Text as="span" bold>{values.email}</Text>
                   </Text>
                 </Box>
               ),
@@ -269,4 +257,4 @@ const RegisterForm = () => {
   );
 };
 
-export default RegisterForm;
+export default SignupForm;

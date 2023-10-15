@@ -4,9 +4,11 @@ import { TextButton as _TextButton } from '@elemental-zcash/components/lib/butto
 import { Box, Row } from 'elemental-react';
 import { Formik } from 'formik';
 import Link from 'next/link';
+import { NextRouter } from 'next/router';
 import * as Yup from 'yup';
 
-import { Text, TextLink } from '../common';
+import { Text, TextLink } from '#components';
+import { FormTextInput } from '../common';
 import PasswordField from './PasswordField';
 import { useMutation } from '@apollo/client';
 import LOGIN from '../../graphql/mutations/login';
@@ -17,6 +19,7 @@ import { useRouter } from 'next/router';
 import { config } from '../../config';
 import { SignupType } from './constants';
 import useViewer from '../../hooks/use-viewer';
+import GET_VIEWER from 'graphql/queries/viewer';
 
 enum LoginStage {
   LOGIN = 'LOGIN',
@@ -76,22 +79,6 @@ const LoginSchema = Yup.object().shape({
     .required('Required'),
 }, [['username', 'email']]);
 
-const FormTextInput = ({ label, value, onChange, ...props }) => (
-  <TextInput
-    placeholder={label}
-    // @ts-ignore
-    value={value}
-    onChange={onChange}
-    pb={0}
-    px={3}
-    borderWidth={1}
-    borderRadius={4}
-    height={40}
-    borderColor="#e2e2f2"
-    {...props}
-  />
-);
-
 
 interface LoginInput {
   email: string,
@@ -125,12 +112,12 @@ const getToken = async (code) => {
   saveToken({ accessToken: access_token, refreshToken: refresh_token, expiresIn: expires_in, tokenType: token_type });
 }
 
-const LoginForm = ({ router, username }) => {
-  const { loading: loadingViewer, viewer } = useViewer();
+const LoginForm = ({ router, username }: { router: NextRouter, username?: string }) => {
+  const { loading: loadingViewer, viewer, refetch } = useViewer();
   const [loginStage, setLoginStage] = useState(LoginStage.LOGIN);
   const [signupType, setSignupType] = useState(SignupType.ACCOUNT_ID);
   const [login, { data, loading, error, }] = useMutation<{ login: LoginSuccess | LoginError }, { input: LoginInput }>(LOGIN, {
-    onCompleted: (result) => {
+    onCompleted: async (result) => {
       if (result.login.__typename === LoginResponse.LoginError) {
         return;
       }
@@ -143,14 +130,16 @@ const LoginForm = ({ router, username }) => {
         return;
       }
 
-      if (!user.isVerifiedEmail) {
-        // setLoginStage(LoginStage.EMAIL_VERIFICATION);
-        // FIXME: Enable email verification flow
-        router.push('/');
-      } else {
-        router.push('/');
-      }
+      // refetch();
+      // if (!user.isVerifiedEmail) {
+      //   // setLoginStage(LoginStage.EMAIL_VERIFICATION);
+      //   // FIXME: Enable email verification flow
+      //   router.push('/');
+      // } else {
+      //   router.push('/');
+      // }
     },
+    // refetchQueries: [GET_VIEWER]
     // errorPolicy: 'all',
   });
   const [sendVerificationEmail, { data: verificationData, loading: verificationLoading, error: verificationError }] = useMutation<{ sendVerificationEmail: boolean }, { address: string }>(SEND_VERIFICATION_EMAIL);
@@ -201,6 +190,8 @@ const LoginForm = ({ router, username }) => {
             // }
             if (accessToken) {
               await saveToken({ accessToken, refreshToken, expiresIn, tokenType });
+              const { data } = await refetch();
+              console.log({ viewer: data?.viewer });
             }
           } 
         }}
@@ -261,20 +252,11 @@ const LoginForm = ({ router, username }) => {
                         value={values.email}
                       >
                         {({ label, value }) =>
-                          <TextInput
-                            placeholder={label}
+                          <FormTextInput
+                            label={label}
                             // @ts-ignore
                             value={value}
                             onChange={handleChange('email')}
-                            // onChangeText={(text) => {
-                            //   setFieldValue('username', text);
-                            // }}
-                            pb={0}
-                            px={3}
-                            borderWidth={1}
-                            borderRadius={4}
-                            height={40}
-                            borderColor="#e2e2f2"
                           />
                         }
                       </InputField>
