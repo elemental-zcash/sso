@@ -83,33 +83,39 @@ const Wrapper = ({ children }) => {
 
 const processStyleFunc = (style) => ({ ...style });
 
+export const AppWrapper = ({ children, ...props }: any) => (
+  <ApolloProvider client={apolloClient}>
+    <QueryClientProvider client={queryClient}>
+      <RPNativeProvider processStyle={processStyleFunc}>
+        <ThemeProvider
+          design={{ Button: {} }}
+          // @ts-ignore
+          colorMode="day" // @ts-ignore
+          theme={{
+            ...theme,
+            // fonts: {
+            //   ...theme.fonts,
+            //   primary: typefaces.ibmPlexSans.mono,
+            //   primaries: typefaces.ibmPlexSans,
+            //   secondary: typefaces.ibmPlexSans.regular,
+            //   secondaries: typefaces.ibmPlexSans,
+            // }
+          }}
+          >
+          <Wrapper>
+            {children}
+          </Wrapper>
+        </ThemeProvider>
+      </RPNativeProvider>
+    </QueryClientProvider>
+  </ApolloProvider>
+);
+
 const App = ({ Component, pageProps }: AppProps) => {
   return (
-    <ApolloProvider client={apolloClient}>
-      <QueryClientProvider client={queryClient}>
-        <RPNativeProvider processStyle={processStyleFunc}>
-          <ThemeProvider
-            design={{ Button: {} }}
-            // @ts-ignore
-            colorMode="day"
-            theme={{
-              ...theme,
-              // fonts: {
-              //   ...theme.fonts,
-              //   primary: typefaces.ibmPlexSans.mono,
-              //   primaries: typefaces.ibmPlexSans,
-              //   secondary: typefaces.ibmPlexSans.regular,
-              //   secondaries: typefaces.ibmPlexSans,
-              // }
-            }}
-            >
-            <Wrapper>
-              <Component {...pageProps} />
-            </Wrapper>
-          </ThemeProvider>
-        </RPNativeProvider>
-      </QueryClientProvider>
-    </ApolloProvider>
+    <AppWrapper>
+      <Component {...pageProps} />
+    </AppWrapper>
   );
 };
 
