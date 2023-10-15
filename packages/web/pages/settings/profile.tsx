@@ -3,8 +3,7 @@ import Link from 'next/link';
 import { Box, Row } from 'elemental-react';
 import { AutoTextArea, Button, TextInput, InputField } from '@elemental-zcash/components';
 
-import Section from '../../components/Section';
-import { Text, TextLink } from '../../components/common';
+import { Text, TextLink, Section } from '#components';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client';
 
 import GET_VIEWER from '../../graphql/queries/viewer';

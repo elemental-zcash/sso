@@ -32,7 +32,7 @@ export interface ViewerNotFoundError {
 };
 
 const useViewer = () => {
-  const { loading, data, error } = useQuery<{ viewer: Viewer | ViewerNotFoundError }>(GET_VIEWER);
+  const { loading, data, error, refetch } = useQuery<{ viewer: Viewer | ViewerNotFoundError }>(GET_VIEWER);
   
   if (loading) {
     return { loading, viewer: null };
@@ -46,7 +46,7 @@ const useViewer = () => {
     return { loading: false, error, viewer: null };
   }
 
-  return { viewer: data.viewer, loading: false }
+  return { viewer: data.viewer, loading: false, refetch }
 };
 
 export default useViewer;

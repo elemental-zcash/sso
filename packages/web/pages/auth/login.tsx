@@ -4,11 +4,10 @@ import { Box, Text, Row } from 'elemental-react';
 import { Button } from '@elemental-zcash/components';
 import InputField from '@elemental-zcash/components/lib/forms/InputField';
 import TextInput from '@elemental-zcash/components/lib/forms/TextInput';
-
-import Section from '../../components/Section';
-import LoginForm from '../../components/auth/login-form';
-import { TextLink } from '../../components/common';
 import { useRouter } from 'next/router';
+import { Section, TextLink } from '#components';
+
+import LoginForm from '../../components/auth/login-form';
 
 
 export default function Signup() {
@@ -28,7 +27,7 @@ export default function Signup() {
             <Text style={{ display: 'inline' }}>
               {'Don’t have an account? '}
               <Link href="/auth/signup">
-                <TextLink color="blue">Sign Up</TextLink>
+                <TextLink as="span" color="blue">Sign Up</TextLink>
               </Link>
             </Text>
           </Row>

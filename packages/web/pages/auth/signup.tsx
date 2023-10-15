@@ -4,8 +4,8 @@ import { Box, Text, Row } from 'elemental-react';
 import { Button } from '@elemental-zcash/components';
 import InputField from '@elemental-zcash/components/lib/forms/InputField';
 import TextInput from '@elemental-zcash/components/lib/forms/TextInput';
+import { Section } from '#components';
 
-import Section from '../../components/Section';
 import SignupForm from '../../components/auth/signup-form';
 import { useRouter } from 'next/router';
 import GET_VIEWER from '../../graphql/queries/viewer';
@@ -55,7 +55,7 @@ export default function Signup() {
             <Text style={{ display: 'inline' }}>
               {'Already have an account? '}
               <Link href="/auth/login">
-                <Text color="blue" style={{ display: 'inline', cursor: 'pointer' }}>Sign In</Text>
+                <Text as="span" color="blue" style={{ display: 'inline', cursor: 'pointer' }}>Sign In</Text>
               </Link>
             </Text>
           </Row>
