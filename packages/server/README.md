@@ -1,3 +1,13 @@
+## Getting Started
+
+## Docker Setup
+
+```sh
+make docker.setup
+```
+
+## Local Setup (ignore if using Docker)
+
 ```sh
 pipenv run flask run
 

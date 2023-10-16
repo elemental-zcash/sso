@@ -21,7 +21,7 @@ export default function Signup() {
       </Head>
 
       <Section width="100%" maxWidth={640}>
-        <LoginForm key={String(router.query.username)} router={router} username={router.query.username} />
+        <LoginForm key={String(router.query.username)} router={router} username={router.query.username as string} />
         <Box mt={20} alignItems="center">
           <Row flex={1}>
             <Text style={{ display: 'inline' }}>
