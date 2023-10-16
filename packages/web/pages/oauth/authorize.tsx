@@ -73,10 +73,10 @@ function AuthorizePage({ ...props }) {
   }
   
   useEffect(() => {
-    if (checkError?.message?.toLowerCase().includes('unauthorized')) {
+    if (checkError?.message?.toLowerCase().includes('unauthorized') || error?.message?.toLowerCase().includes('unauthorized')) {
       router.push(`/auth/login?callback_uri=${redirect_uri}&scope=${scope}&client_id=${client_id}`)
     }
-  }, [checkError]);
+  }, [checkError, error]);
 
   // useEffect(() => {
   //   checkAuthorizationGrant();
