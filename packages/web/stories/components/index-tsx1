@@ -1,0 +1,12 @@
+// import Home from '../../pages/index';
+// import appWrapper from '../decorators';
+
+// export default {
+//   title: "Components/Getting Started",
+//   component: Home,
+//   decorators: [
+//     appWrapper
+//   ]
+// };
+
+// export const HomePage = () => <Home />

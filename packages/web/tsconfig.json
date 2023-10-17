@@ -16,8 +16,8 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
-      "#components/*": ["../components/*"],
-      "#components": ["../components/"],
+      "#components/*": ["./node_modules/@elemental-zcash/sso-components/*"],
+      "#components": ["./node_modules/@elemental-zcash/sso-components/"],
       "elemental-color/*": ["./node_modules/elemental-color/*"],
     }
   },

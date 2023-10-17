@@ -12,3 +12,6 @@ start.prod:
 
 stop:
 	docker compose -f docker-compose.yml down
+
+build:
+	docker build -t 1337bytes/elemental-sso-web:0.0.2-beta.0 .

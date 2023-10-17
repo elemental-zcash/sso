@@ -4,6 +4,7 @@ const withTM = require('next-transpile-modules')([
 ]);
 
 module.exports = withTM({
+  output: 'standalone',
   poweredByHeader: false,
   // env: {
   //   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
